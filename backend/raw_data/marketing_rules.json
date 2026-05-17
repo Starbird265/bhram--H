@@ -1,0 +1,14 @@
+[
+    {
+        "content": "The Q3 budget for external ad spend is capped at $50,000.",
+        "type": "fact",
+        "department": "marketing",
+        "tags": ["budget", "Q3", "ads"]
+    },
+    {
+        "content": "NEVER use the old red logo in external communications. Use the 2025 brand refresh logo.",
+        "type": "negative_example",
+        "department": "marketing",
+        "tags": ["brand", "logo"]
+    }
+]

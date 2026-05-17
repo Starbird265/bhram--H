@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizational Intelligence Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-mesh"></div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="pulse-dot" id="status-indicator"></div>
+                <h1>Cortex AI</h1>
+            </div>
+            <p class="subtitle">Organizational Intelligence Orchestration</p>
+        </header>
+
+        <main>
+            <div class="grid">
+                <!-- Configuration Panel -->
+                <div class="card glass-card">
+                    <h2>Configuration Settings</h2>
+                    <div class="form-group">
+                        <label for="data-sources">Data Sources (Disks, Folders, Files - One per line)</label>
+                        <textarea id="data-sources" class="input-field" rows="3" placeholder="/Volumes/DataDisk1\n/Users/Shared/KnowledgeBase\n/path/to/specific/file.pdf"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="openai-key">OpenAI API Key</label>
+                        <input type="password" id="openai-key" class="input-field" placeholder="sk-...">
+                    </div>
+                    <div class="form-group">
+                        <label for="slack-channel">Target Slack Channel</label>
+                        <input type="text" id="slack-channel" class="input-field" placeholder="e.g. C1234_ENGINEERING">
+                    </div>
+                    <button class="btn btn-secondary mt-2" onclick="saveConfig()" id="save-config-btn">Save Configuration</button>
+                </div>
+
+                <!-- Status Panel -->
+                <div class="card glass-card">
+                    <h2>System Status</h2>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <span>OpenAI Connection</span>
+                            <span class="badge" id="openai-status">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Local Database</span>
+                            <span class="badge" id="db-status">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Pipeline Status</span>
+                            <span class="badge" id="pipeline-status">Idle</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Stats Panel -->
+                <div class="card glass-card">
+                    <h2>Knowledge Base</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-value" id="total-chunks">--</span>
+                            <span class="stat-label">Raw Chunks</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-value" id="total-skills">--</span>
+                            <span class="stat-label">Active Skills</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary mt-4" onclick="fetchStats()">Refresh Stats</button>
+                </div>
+            </div>
+
+            <!-- Agent Provisioning Panel -->
+            <div class="card glass-card full-width mt-6">
+                <div class="panel-header">
+                    <h2>Agent Provisioning</h2>
+                </div>
+                <div class="agent-grid mt-4">
+                    <div class="form-group">
+                        <label for="agent-selector">Select Agent</label>
+                        <select id="agent-selector" class="input-field">
+                            <option value="code_reviewer">Code Reviewer Agent</option>
+                            <option value="architect">Architect Agent</option>
+                            <option value="debugger">Debugger Agent</option>
+                            <option value="sec_auditor">Security Auditor Agent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="skill-selector">Select Distilled Skill</label>
+                        <select id="skill-selector" class="input-field">
+                            <option value="" disabled selected>Loading skills...</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end; padding-bottom: 0.25rem;">
+                        <button class="btn btn-primary" id="assign-btn" onclick="assignSkillToAgent()">Bind Skill to Agent</button>
+                    </div>
+                </div>
+                <div id="agent-msg" class="mt-2 text-muted" style="font-size: 0.9rem;"></div>
+            </div>
+
+            <!-- Orchestration Panel -->
+            <div class="card glass-card full-width mt-6">
+                <div class="panel-header">
+                    <h2>Orchestration Loop</h2>
+                    <button class="btn btn-primary" id="run-btn" onclick="runPipeline()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Execute Pipeline
+                    </button>
+                </div>
+                
+                <div class="terminal-window mt-4">
+                    <div class="terminal-header">
+                        <div class="mac-btns">
+                            <span class="mac-btn close"></span>
+                            <span class="mac-btn minimize"></span>
+                            <span class="mac-btn maximize"></span>
+                        </div>
+                        <div class="terminal-title">bash - cortex-execution</div>
+                    </div>
+                    <div class="terminal-body" id="terminal-output">
+                        <div class="log-line text-muted">Configure settings above, then orchestrate data pipeline...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

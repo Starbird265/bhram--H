@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "bhrm-intelligence": {
+      "command": "/Users/gauravsingh/Desktop/bhrm--H/backend/venv/bin/python3",
+      "args": [
+        "/Users/gauravsingh/Desktop/bhrm--H/backend/src/mcp_server.py"
+      ],
+      "env": {
+        "OPENAI_API_KEY": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+name: Cortex AI CI/CD
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install backend dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+        
+    - name: Run Backend Tests
+      env:
+        PYTHONPATH: backend/src
+      run: |
+        # Simply run the existing python test scripts
+        if [ -f test_distill.py ]; then python test_distill.py; fi
+        if [ -f test_line.py ]; then python test_line.py; fi
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 backend/src --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings
+        flake8 backend/src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
