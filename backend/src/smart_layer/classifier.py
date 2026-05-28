@@ -16,9 +16,11 @@ from core.models import (
 )
 
 try:
-    from openai import OpenAI
+    from providers.router import ProviderRouter
+    from providers import AIRequest
+    _ROUTER_AVAILABLE = True
 except ImportError:
-    OpenAI = None
+    _ROUTER_AVAILABLE = False
 
 
 class ClassificationResult(BaseModel):
@@ -32,8 +34,14 @@ class ClassificationResult(BaseModel):
 class LLMClassifier:
     """Classifies raw text into structured KnowledgeChunks."""
 
-    def __init__(self):
-        self.client = OpenAI() if OpenAI and os.getenv("OPENAI_API_KEY") else None
+    def __init__(self, router=None):
+        if router:
+            self.router = router
+        elif _ROUTER_AVAILABLE:
+            self.router = ProviderRouter()
+        else:
+            self.router = None
+        self.client = self.router
 
     def classify_chunk(self, raw_text: str, source: str) -> Optional[KnowledgeChunk]:
         """Classifies a raw string into a structured KnowledgeChunk using an LLM."""
@@ -41,17 +49,39 @@ class LLMClassifier:
             return self._mock_classify(raw_text, source)
 
         try:
-            response = self.client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+            import asyncio
+            import json as json_mod
+
+            request = AIRequest(
+                purpose="classify",
                 messages=[
                     {"role": "system", "content": "You are an expert organizational knowledge classifier. Analyze the text and classify it into the correct department and knowledge type. If the text is casual chat or irrelevant noise, set is_noise to true."},
                     {"role": "user", "content": f"Source: {source}\n\nText: {raw_text}"}
                 ],
-                response_format=ClassificationResult,
+                response_schema=ClassificationResult,
+                temperature=0.3,
             )
-            result = response.choices[0].message.parsed
 
-            if result.is_noise:
+            loop = asyncio.new_event_loop()
+            try:
+                response = loop.run_until_complete(self.router.complete(request))
+            finally:
+                loop.close()
+
+            if response.error:
+                return self._mock_classify(raw_text, source)
+
+            result = None
+            if response.parsed and hasattr(response.parsed, 'is_noise'):
+                result = response.parsed
+            elif response.content:
+                try:
+                    data = json_mod.loads(response.content)
+                    result = ClassificationResult(**data)
+                except Exception:
+                    pass
+
+            if not result or result.is_noise:
                 return None
 
             return KnowledgeChunk(

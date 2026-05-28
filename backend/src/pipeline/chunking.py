@@ -206,97 +206,116 @@ class SemanticChunker:
     # ─── Internal Methods ────────────────────────────────────────
 
     def _split_with_metadata(self, text: str) -> List[RawChunk]:
-        """Recursively splits text while tracking section headers and positions."""
-        chunks = self._recursive_split(text, self.separators)
-        result = []
-        char_offset = 0
+        """
+        Line-aware splitting: splits text into individual lines first,
+        then groups consecutive lines into chunks within the token budget.
+        Never splits a single line across two chunks.
+        """
+        lines = text.split('\n')
+        chunks = []
+        current_lines = []
+        current_word_count = 0
+        current_header = None
+        chunk_start_char = 0
 
-        for chunk_text in chunks:
-            # Try to extract a section header from the chunk
-            header = None
-            header_match = re.match(r'^(#{1,3})\s+(.+?)$', chunk_text, re.MULTILINE)
+        for line in lines:
+            stripped = line.strip()
+            # Track section headers for metadata
+            header_match = re.match(r'^(#{1,3})\s+(.+?)$', stripped)
             if header_match:
-                header = header_match.group(2).strip()
+                current_header = header_match.group(2).strip()
 
-            start = text.find(chunk_text, char_offset)
-            if start == -1:
-                start = char_offset
-            end = start + len(chunk_text)
+            line_words = len(stripped.split()) if stripped else 0
 
-            result.append(RawChunk(
-                text=chunk_text,
-                section_header=header,
-                start_char=start,
-                end_char=end
-            ))
-            char_offset = end
-
-        return result
-
-    def _recursive_split(self, text: str, separators: List[str]) -> List[str]:
-        """Core recursive splitting algorithm."""
-        final_chunks = []
-
-        # Base case: text is within limits
-        if len(text.split()) <= self.max_tokens:
-            return [text]
-
-        # Find the best separator to split on
-        separator = separators[0] if separators else ""
-        for sep in separators:
-            if sep in text:
-                separator = sep
-                break
-
-        # If no separator found, just return the text (fail open)
-        if not separator:
-            return [text]
-
-        # Split the text
-        splits = text.split(separator)
-
-        # Merge splits iteratively until we hit max_tokens
-        current_chunk = ""
-        for split in splits:
-            if not split.strip():
+            # Skip completely empty lines (but don't flush — they're just separators)
+            if not stripped:
+                if current_lines:
+                    current_lines.append('')  # preserve paragraph breaks
                 continue
 
-            # If the current split itself is too large, recurse with finer separators
-            if len(split.split()) > self.max_tokens:
-                if current_chunk:
-                    final_chunks.append(current_chunk.strip())
-                    current_chunk = ""
+            # If a single line exceeds budget, it becomes its own chunk
+            if line_words > self.max_tokens:
+                # Flush current group first
+                if current_lines:
+                    chunk_text = '\n'.join(current_lines).strip()
+                    if chunk_text:
+                        chunks.append(RawChunk(
+                            text=chunk_text,
+                            section_header=current_header,
+                            start_char=chunk_start_char,
+                            end_char=chunk_start_char + len(chunk_text),
+                        ))
+                    current_lines = []
+                    current_word_count = 0
+                    chunk_start_char += len(chunk_text) + 1
 
-                next_seps = separators[separators.index(separator) + 1:] if separator in separators else []
-                final_chunks.extend(self._recursive_split(split, next_seps))
+                # Add oversized line as its own chunk
+                chunks.append(RawChunk(
+                    text=stripped,
+                    section_header=current_header,
+                    start_char=chunk_start_char,
+                    end_char=chunk_start_char + len(stripped),
+                ))
+                chunk_start_char += len(stripped) + 1
                 continue
 
-            # If adding this split exceeds the chunk limit, save and start new
-            potential_chunk = current_chunk + (separator if current_chunk else "") + split
-            if len(potential_chunk.split()) > self.max_tokens:
-                if current_chunk:
-                    final_chunks.append(current_chunk.strip())
-                current_chunk = split
-            else:
-                current_chunk = potential_chunk
+            # If adding this line would exceed budget, flush current group
+            if current_word_count + line_words > self.max_tokens and current_lines:
+                chunk_text = '\n'.join(current_lines).strip()
+                if chunk_text:
+                    chunks.append(RawChunk(
+                        text=chunk_text,
+                        section_header=current_header,
+                        start_char=chunk_start_char,
+                        end_char=chunk_start_char + len(chunk_text),
+                    ))
+                chunk_start_char += len(chunk_text) + 1
+                current_lines = []
+                current_word_count = 0
 
-        if current_chunk:
-            final_chunks.append(current_chunk.strip())
+            current_lines.append(stripped)
+            current_word_count += line_words
 
-        return final_chunks
+        # Flush remaining lines
+        if current_lines:
+            chunk_text = '\n'.join(current_lines).strip()
+            if chunk_text:
+                chunks.append(RawChunk(
+                    text=chunk_text,
+                    section_header=current_header,
+                    start_char=chunk_start_char,
+                    end_char=chunk_start_char + len(chunk_text),
+                ))
+
+        return chunks
 
     def _add_overlap(self, chunks: List[RawChunk]) -> List[RawChunk]:
         """
-        Adds overlap windows between adjacent chunks for context preservation.
-        Takes the last N tokens from chunk[i] and prepends to chunk[i+1].
+        Adds line-level overlap between adjacent chunks for context preservation.
+        Takes the last N lines (by word count up to overlap_tokens) from chunk[i]
+        and prepends to chunk[i+1]. Never injects synthetic markers.
         """
         if len(chunks) <= 1 or self.overlap_tokens <= 0:
             return chunks
 
         for i in range(1, len(chunks)):
-            prev_words = chunks[i - 1].text.split()
-            if len(prev_words) > self.overlap_tokens:
-                overlap_text = " ".join(prev_words[-self.overlap_tokens:])
-                chunks[i].text = f"[...context] {overlap_text}\n\n{chunks[i].text}"
+            prev_lines = chunks[i - 1].text.split('\n')
+            overlap_lines = []
+            overlap_words = 0
+
+            # Walk backward through previous chunk's lines
+            for line in reversed(prev_lines):
+                line_stripped = line.strip()
+                if not line_stripped:
+                    continue
+                line_words = len(line_stripped.split())
+                if overlap_words + line_words > self.overlap_tokens:
+                    break
+                overlap_lines.insert(0, line_stripped)
+                overlap_words += line_words
+
+            if overlap_lines:
+                overlap_text = '\n'.join(overlap_lines)
+                chunks[i].text = f"{overlap_text}\n{chunks[i].text}"
 
         return chunks

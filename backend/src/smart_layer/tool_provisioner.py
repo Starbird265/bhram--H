@@ -3,9 +3,11 @@ from typing import List
 from pydantic import BaseModel
 from core.models import SkillDef, SkillMetadata
 try:
-    from openai import OpenAI
+    from providers.router import ProviderRouter
+    from providers import AIRequest
+    _ROUTER_AVAILABLE = True
 except ImportError:
-    OpenAI = None
+    _ROUTER_AVAILABLE = False
 
 class ToolRequirement(BaseModel):
     mcp_servers: List[str]
@@ -22,8 +24,14 @@ AVAILABLE_MCP_SERVERS = [
 ]
 
 class ToolProvisioner:
-    def __init__(self):
-        self.client = OpenAI() if OpenAI and os.getenv("OPENAI_API_KEY") else None
+    def __init__(self, router=None):
+        if router:
+            self.router = router
+        elif _ROUTER_AVAILABLE:
+            self.router = ProviderRouter()
+        else:
+            self.router = None
+        self.client = self.router
 
     def determine_tools(self, skill: SkillDef) -> List[str]:
         """Analyzes a skill definition and determines required MCP servers."""
@@ -34,15 +42,38 @@ class ToolProvisioner:
         skill_text = f"Name: {skill.name}\nDescription: {skill.description}\nPrerequisites: {skill.prerequisites}\nSteps: {skill.steps}"
         
         try:
-            response = self.client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+            import asyncio
+            import json as json_mod
+
+            request = AIRequest(
+                purpose="classify",
                 messages=[
                     {"role": "system", "content": f"You are an AI tool provisioner. Analyze the skill definition and select the necessary MCP servers from this list: {', '.join(AVAILABLE_MCP_SERVERS)}. Return only the names of the required servers."},
                     {"role": "user", "content": skill_text}
                 ],
-                response_format=ToolRequirement,
+                response_schema=ToolRequirement,
+                temperature=0.3,
             )
-            return response.choices[0].message.parsed.mcp_servers
+
+            loop = asyncio.new_event_loop()
+            try:
+                response = loop.run_until_complete(self.router.complete(request))
+            finally:
+                loop.close()
+
+            if response.error:
+                return self._mock_determine(skill)
+
+            if response.parsed and hasattr(response.parsed, 'mcp_servers'):
+                return response.parsed.mcp_servers
+            elif response.content:
+                try:
+                    data = json_mod.loads(response.content)
+                    result = ToolRequirement(**data)
+                    return result.mcp_servers
+                except Exception:
+                    pass
+            return self._mock_determine(skill)
         except Exception as e:
             print(f"Tool provisioning failed: {e}. Falling back to mock.")
             return self._mock_determine(skill)

@@ -1,0 +1,60 @@
+{
+  "_readme": "Same format as Claude Desktop config. Paste your tokens here. This file is gitignored.",
+  "_how_to_get_tokens": {
+    "notion": "notion.so/my-integrations \u2192 New integration \u2192 copy Internal Integration Secret",
+    "slack": "api.slack.com/apps \u2192 OAuth & Permissions \u2192 Bot User OAuth Token (xoxb-...)",
+    "github": "github.com/settings/tokens \u2192 Personal access tokens \u2192 Generate new token",
+    "linear": "linear.app/settings/api \u2192 Personal API Keys \u2192 Create key"
+  },
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@notionhq/notion-mcp-server"
+      ],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ntn_K76390821926tdulCergPxMJAc2QDdZpboro1meBXLB6sU\"}"
+      }
+    },
+    "slack": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-slack"
+      ],
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-PASTE-YOUR-SLACK-BOT-TOKEN",
+        "SLACK_TEAM_ID": "T0000000000"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_PASTE_YOUR_GITHUB_TOKEN"
+      }
+    },
+    "google_drive": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gdrive"
+      ],
+      "env": {}
+    },
+    "linear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@linear/linear-mcp-server"
+      ],
+      "env": {
+        "LINEAR_API_KEY": "lin_api_PASTE_YOUR_LINEAR_KEY"
+      }
+    }
+  }
+}

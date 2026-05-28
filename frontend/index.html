@@ -1,134 +1,1031 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizational Intelligence Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORTEX AI – ORCHESTRATION CONSOLE</title>
+<meta name="description" content="Cortex AI Orchestration Console - Retro Terminal UI dashboard for autonomous organizational intelligence and department knowledge base pipelines.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="background-mesh"></div>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <div class="pulse-dot" id="status-indicator"></div>
-                <h1>Cortex AI</h1>
-            </div>
-            <p class="subtitle">Organizational Intelligence Orchestration</p>
-        </header>
 
-        <main>
-            <div class="grid">
-                <!-- Configuration Panel -->
-                <div class="card glass-card">
-                    <h2>Configuration Settings</h2>
-                    <div class="form-group">
-                        <label for="data-sources">Data Sources (Disks, Folders, Files - One per line)</label>
-                        <textarea id="data-sources" class="input-field" rows="3" placeholder="/Volumes/DataDisk1\n/Users/Shared/KnowledgeBase\n/path/to/specific/file.pdf"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="openai-key">OpenAI API Key</label>
-                        <input type="password" id="openai-key" class="input-field" placeholder="sk-...">
-                    </div>
-                    <div class="form-group">
-                        <label for="slack-channel">Target Slack Channel</label>
-                        <input type="text" id="slack-channel" class="input-field" placeholder="e.g. C1234_ENGINEERING">
-                    </div>
-                    <button class="btn btn-secondary mt-2" onclick="saveConfig()" id="save-config-btn">Save Configuration</button>
-                </div>
+<div class="os-shell" id="os-shell">
 
-                <!-- Status Panel -->
-                <div class="card glass-card">
-                    <h2>System Status</h2>
-                    <div class="status-list">
-                        <div class="status-item">
-                            <span>OpenAI Connection</span>
-                            <span class="badge" id="openai-status">Checking...</span>
-                        </div>
-                        <div class="status-item">
-                            <span>Local Database</span>
-                            <span class="badge" id="db-status">Checking...</span>
-                        </div>
-                        <div class="status-item">
-                            <span>Pipeline Status</span>
-                            <span class="badge" id="pipeline-status">Idle</span>
-                        </div>
-                    </div>
-                </div>
+  <!-- ── TITLE BAR ── -->
+  <div class="os-titlebar">
+    <h1 class="title-text">⬛ CORTEX AI – ORCHESTRATION CONSOLE v2.11</h1>
+    <div class="title-btns">
+      <button class="title-btn" title="Minimize">_</button>
+      <button class="title-btn" title="Maximize">□</button>
+      <button class="title-btn close" title="Close">✕</button>
+    </div>
+  </div>
 
-                <!-- Database Stats Panel -->
-                <div class="card glass-card">
-                    <h2>Knowledge Base</h2>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="stat-value" id="total-chunks">--</span>
-                            <span class="stat-label">Raw Chunks</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-value" id="total-skills">--</span>
-                            <span class="stat-label">Active Skills</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-secondary mt-4" onclick="fetchStats()">Refresh Stats</button>
-                </div>
-            </div>
+  <!-- ── BODY ── -->
+  <div class="os-body">
 
-            <!-- Agent Provisioning Panel -->
-            <div class="card glass-card full-width mt-6">
-                <div class="panel-header">
-                    <h2>Agent Provisioning</h2>
-                </div>
-                <div class="agent-grid mt-4">
-                    <div class="form-group">
-                        <label for="agent-selector">Select Agent</label>
-                        <select id="agent-selector" class="input-field">
-                            <option value="code_reviewer">Code Reviewer Agent</option>
-                            <option value="architect">Architect Agent</option>
-                            <option value="debugger">Debugger Agent</option>
-                            <option value="sec_auditor">Security Auditor Agent</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="skill-selector">Select Distilled Skill</label>
-                        <select id="skill-selector" class="input-field">
-                            <option value="" disabled selected>Loading skills...</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; align-items: flex-end; padding-bottom: 0.25rem;">
-                        <button class="btn btn-primary" id="assign-btn" onclick="assignSkillToAgent()">Bind Skill to Agent</button>
-                    </div>
-                </div>
-                <div id="agent-msg" class="mt-2 text-muted" style="font-size: 0.9rem;"></div>
-            </div>
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <svg width="64" height="56" viewBox="0 0 64 56" style="display:block;margin:0 auto 8px;">
+          <rect x="20" y="4"  width="8" height="8" fill="#ff4785"/>
+          <rect x="28" y="4"  width="8" height="8" fill="#ff4785"/>
+          <rect x="36" y="4"  width="8" height="8" fill="#ff4785"/>
+          <rect x="12" y="12" width="8" height="8" fill="#ff4785"/>
+          <rect x="20" y="12" width="8" height="8" fill="#ff77bb"/>
+          <rect x="28" y="12" width="8" height="8" fill="#ff4785"/>
+          <rect x="36" y="12" width="8" height="8" fill="#ff77bb"/>
+          <rect x="44" y="12" width="8" height="8" fill="#ff4785"/>
+          <rect x="8"  y="20" width="8" height="8" fill="#ff4785"/>
+          <rect x="16" y="20" width="8" height="8" fill="#ff77bb"/>
+          <rect x="24" y="20" width="8" height="8" fill="#ff4785"/>
+          <rect x="32" y="20" width="8" height="8" fill="#ff77bb"/>
+          <rect x="40" y="20" width="8" height="8" fill="#ff4785"/>
+          <rect x="48" y="20" width="8" height="8" fill="#ff77bb"/>
+          <rect x="8"  y="28" width="8" height="8" fill="#ff77bb"/>
+          <rect x="16" y="28" width="8" height="8" fill="#ff4785"/>
+          <rect x="24" y="28" width="8" height="8" fill="#ff77bb"/>
+          <rect x="32" y="28" width="8" height="8" fill="#ff4785"/>
+          <rect x="40" y="28" width="8" height="8" fill="#ff77bb"/>
+          <rect x="48" y="28" width="8" height="8" fill="#ff4785"/>
+          <rect x="12" y="36" width="8" height="8" fill="#ff4785"/>
+          <rect x="20" y="36" width="8" height="8" fill="#ff77bb"/>
+          <rect x="28" y="36" width="8" height="8" fill="#ff4785"/>
+          <rect x="36" y="36" width="8" height="8" fill="#ff77bb"/>
+          <rect x="44" y="36" width="8" height="8" fill="#ff4785"/>
+          <rect x="20" y="44" width="8" height="8" fill="#ff4785"/>
+          <rect x="28" y="44" width="8" height="8" fill="#ff77bb"/>
+          <rect x="36" y="44" width="8" height="8" fill="#ff4785"/>
+          <rect x="4"  y="24" width="4" height="2" fill="#00ff66"/>
+          <rect x="4"  y="30" width="4" height="2" fill="#00ff66"/>
+          <rect x="56" y="24" width="4" height="2" fill="#00ff66"/>
+          <rect x="56" y="30" width="4" height="2" fill="#00ff66"/>
+        </svg>
+        <span class="logo-name">CORTEX AI</span>
+        <span class="logo-ver">v2.11.0 – BRAIN•LINK•SHIP</span>
+      </div>
 
-            <!-- Orchestration Panel -->
-            <div class="card glass-card full-width mt-6">
-                <div class="panel-header">
-                    <h2>Orchestration Loop</h2>
-                    <button class="btn btn-primary" id="run-btn" onclick="runPipeline()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                        Execute Pipeline
-                    </button>
-                </div>
-                
-                <div class="terminal-window mt-4">
-                    <div class="terminal-header">
-                        <div class="mac-btns">
-                            <span class="mac-btn close"></span>
-                            <span class="mac-btn minimize"></span>
-                            <span class="mac-btn maximize"></span>
-                        </div>
-                        <div class="terminal-title">bash - cortex-execution</div>
-                    </div>
-                    <div class="terminal-body" id="terminal-output">
-                        <div class="log-line text-muted">Configure settings above, then orchestrate data pipeline...</div>
-                    </div>
-                </div>
-            </div>
-        </main>
+      <div class="menu-section">
+        <span class="menu-label">■ MAIN MENU</span>
+        <button class="menu-item active" data-view="dashboard" id="nav-dashboard">
+          <span class="icon">🏠</span> DASHBOARD
+        </button>
+        <button class="menu-item" data-view="config" id="nav-config">
+          <span class="icon">⚙</span> CONFIGURATION
+        </button>
+        <button class="menu-item" data-view="connectors" id="nav-connectors">
+          <span class="icon">🔌</span> CONNECTORS
+        </button>
+        <button class="menu-item" data-view="memory" id="nav-memory">
+          <span class="icon">🗂</span> MEMORY EXPLORER
+        </button>
+        <button class="menu-item" data-view="agents" id="nav-agents">
+          <span class="icon">🤖</span> AGENT PROVISIONING
+        </button>
+        <button class="menu-item" data-view="orch" id="nav-orch">
+          <span class="icon">🔄</span> ORCHESTRATION LOOP
+        </button>
+        <button class="menu-item" data-view="search" id="nav-search">
+          <span class="icon">🔍</span> KNOWLEDGE SEARCH
+        </button>
+        <button class="menu-item" data-view="status" id="nav-status">
+          <span class="icon">📡</span> SYSTEM STATUS
+        </button>
+        <button class="menu-item" data-view="audit" id="nav-audit">
+          <span class="icon">⚖</span> AUDIT & INTEGRITY
+        </button>
+      </div>
+
+      <!-- Decorative stars -->
+      <div class="sidebar-stars">
+        <span class="star">✦</span><span class="star">✦</span><span class="star">✧</span>
+      </div>
+
+      <div class="sys-time">
+        <span class="time-label">⊙ SYSTEM TIME</span>
+        <span class="date-val" id="sys-date">----.--.--</span>
+        <span class="time-val" id="sys-time">--:--:--</span>
+        <hr class="divider">
+        <div id="pipeline-badge" class="pipeline-badge idle">■ IDLE</div>
+      </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- ── CONTENT AREA ── -->
+    <div class="content-area">
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: DASHBOARD                          -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view active" id="view-dashboard">
+        <div class="dashboard-grid">
+
+          <!-- Status Panel -->
+          <div class="win-panel">
+            <div class="win-titlebar pink">
+              <span>📡 SYSTEM STATUS</span>
+              <button class="win-closex" onclick="checkStatus()">↻</button>
+            </div>
+            <div class="win-body">
+              <div class="status-row">
+                <span class="status-key">AI ENGINE:</span>
+                <span class="dot" id="dot-ai"></span>
+                <span class="status-val" id="val-ai">CHECKING...</span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">LOCAL DATABASE:</span>
+                <span class="dot" id="dot-db"></span>
+                <span class="status-val" id="val-db">CHECKING...</span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">ORCH PIPELINE:</span>
+                <span class="dot" id="dot-pipe"></span>
+                <span class="status-val" id="val-pipe">IDLE</span>
+              </div>
+              <hr class="divider">
+              <div class="status-row">
+                <span class="status-key">LAST RUN:</span>
+                <span class="status-val white" id="val-last-run">N/A</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KB Stats Panel -->
+          <div class="win-panel">
+            <div class="win-titlebar green">
+              <span>📦 KNOWLEDGE BASE</span>
+              <button class="win-closex" onclick="fetchStats()">↻</button>
+            </div>
+            <div class="win-body">
+              <div class="kb-stat">
+                <span class="stat-label">RAW CHUNKS</span>
+                <span class="stat-val" id="raw-chunks">--</span>
+              </div>
+              <div class="kb-stat">
+                <span class="stat-label">ACTIVE SKILLS</span>
+                <span class="stat-val" id="active-skills">--</span>
+              </div>
+              <div class="kb-stat">
+                <span class="stat-label">MEMORY UNITS</span>
+                <span class="stat-val" id="memory-units-count">--</span>
+              </div>
+              <div class="kb-stat">
+                <span class="stat-label">ATOMIC UNITS</span>
+                <span class="stat-val" id="atomic-units-count">--</span>
+              </div>
+              <hr class="divider" style="margin:6px 0;">
+              <div id="dept-breakdown" style="font-family:var(--px);font-size:6px;color:#888;line-height:2;"></div>
+              <div class="brain-container">
+                <svg class="brain-svg" viewBox="0 0 80 60">
+                  <rect x="25" y="4"  width="6" height="6" fill="#ff4785"/><rect x="31" y="4"  width="6" height="6" fill="#ff4785"/>
+                  <rect x="37" y="4"  width="6" height="6" fill="#ff4785"/><rect x="19" y="10" width="6" height="6" fill="#ff4785"/>
+                  <rect x="25" y="10" width="6" height="6" fill="#ff77bb"/><rect x="31" y="10" width="6" height="6" fill="#ff4785"/>
+                  <rect x="37" y="10" width="6" height="6" fill="#ff77bb"/><rect x="43" y="10" width="6" height="6" fill="#ff4785"/>
+                  <rect x="13" y="16" width="6" height="6" fill="#ff4785"/><rect x="19" y="16" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="25" y="16" width="6" height="6" fill="#ff4785"/><rect x="31" y="16" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="37" y="16" width="6" height="6" fill="#ff4785"/><rect x="43" y="16" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="49" y="16" width="6" height="6" fill="#ff4785"/><rect x="13" y="22" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="19" y="22" width="6" height="6" fill="#ff4785"/><rect x="25" y="22" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="31" y="22" width="6" height="6" fill="#ff4785"/><rect x="37" y="22" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="43" y="22" width="6" height="6" fill="#ff4785"/><rect x="49" y="22" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="19" y="28" width="6" height="6" fill="#ff4785"/><rect x="25" y="28" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="31" y="28" width="6" height="6" fill="#ff4785"/><rect x="37" y="28" width="6" height="6" fill="#ff77bb"/>
+                  <rect x="43" y="28" width="6" height="6" fill="#ff4785"/><rect x="25" y="34" width="6" height="6" fill="#ff4785"/>
+                  <rect x="31" y="34" width="6" height="6" fill="#ff77bb"/><rect x="37" y="34" width="6" height="6" fill="#ff4785"/>
+                  <rect x="4"  y="10" width="4" height="2" fill="#00ff66"/><rect x="4" y="10" width="2" height="24" fill="#00ff66"/>
+                  <rect x="4"  y="32" width="4" height="2" fill="#00ff66"/><rect x="72" y="10" width="4" height="2" fill="#00ff66"/>
+                  <rect x="74" y="10" width="2" height="24" fill="#00ff66"/><rect x="72" y="32" width="4" height="2" fill="#00ff66"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Orch Panel -->
+          <div class="win-panel" style="grid-column: 1 / -1;">
+            <div class="win-titlebar dark">
+              <span>⚡ QUICK ORCHESTRATION</span>
+              <div style="display:flex;gap:4px;">
+                <button class="retro-btn success" id="dash-start-btn" onclick="runPipeline()">▶ START PIPELINE</button>
+                <button class="retro-btn danger" id="dash-stop-btn" onclick="stopPipeline()" style="display:none;">■ STOP</button>
+              </div>
+            </div>
+            <div class="win-body" style="padding:0;">
+              <div class="terminal" id="dash-terminal" style="height:160px;">
+                <span class="t-line"><span class="t-time">[BOOT]</span> CORTEX AI ORCHESTRATION CONSOLE READY.</span>
+                <span class="t-line"><span class="t-time">[INFO]</span> Awaiting command. Press ▶ START PIPELINE to begin.</span>
+                <span class="t-line"><span class="t-cursor"></span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: CONFIGURATION                      -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-config">
+        <div class="win-panel full-view">
+          <div class="win-titlebar blue">
+            <span>⚙ CONFIGURATION SETTINGS</span>
+            <button class="win-closex">✕</button>
+          </div>
+          <div class="win-body scroll-body">
+
+            <div class="section-label">■ DATA INGESTION</div>
+
+            <!-- hidden inputs for native file/folder picking -->
+            <input type="file" id="_folder-picker" webkitdirectory multiple style="display:none" onchange="addPickedPaths(this,true)">
+            <input type="file" id="_file-picker"   multiple style="display:none" onchange="addPickedPaths(this,false)">
+            <!-- hidden textarea keeps the real value for saveConfig() -->
+            <textarea id="cfg-data-sources" style="display:none"></textarea>
+
+            <div style="margin-bottom:8px;">
+              <div class="section-label" style="margin-bottom:8px;">DATA SOURCE PATHS</div>
+              <!-- path chips list -->
+              <div id="ds-chips" style="
+                min-height:40px;
+                background:#fff;
+                border-top:2px solid #888;border-left:2px solid #888;
+                border-right:2px solid #fff;border-bottom:2px solid #fff;
+                padding:8px 10px;
+                display:flex;flex-wrap:wrap;gap:7px;
+                margin-bottom:10px;
+                font-family:var(--px);font-size:var(--fs-xxs);
+              ">
+                <span id="ds-empty" style="color:#aaa;font-family:var(--px);font-size:var(--fs-xxs);line-height:2;">No paths added yet — use the buttons below to browse or type a path.</span>
+              </div>
+
+              <!-- ── Manual path type/paste ── -->
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;">
+                <input type="text" id="manual-path-input" class="field-input"
+                       placeholder="/Users/yourname/Documents/company-docs"
+                       style="flex:1;font-family:var(--vt);font-size:16px;"
+                       onkeydown="if(event.key==='Enter')addManualPath()">
+                <button class="retro-btn success" onclick="addManualPath()" style="white-space:nowrap;flex-shrink:0;">
+                  + ADD PATH
+                </button>
+              </div>
+
+              <!-- picker buttons -->
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="retro-btn" onclick="document.getElementById('_folder-picker').click()">
+                  📁 BROWSE FOLDER
+                </button>
+                <button class="retro-btn" onclick="document.getElementById('_file-picker').click()">
+                  📄 BROWSE FILES
+                </button>
+                <button class="retro-btn danger" onclick="clearAllPaths()" style="margin-left:auto;">
+                  ✕ CLEAR ALL
+                </button>
+              </div>
+              <div style="font-family:var(--px);font-size:7px;color:#888;margin-top:8px;line-height:1.9;">
+                ↑ Type any disk path above and press + ADD PATH,  or use BROWSE FOLDER to pick from your Mac.
+              </div>
+            </div>
+
+
+            <hr class="divider">
+            <div class="section-label">■ API AUTHENTICATION</div>
+            <div class="field-row">
+              <span class="field-label">CORTEX API KEY:</span>
+              <input class="field-input pw" type="password" id="cfg-cortex-api-key" placeholder="your-cortex-api-key (if CORTEX_API_KEY is set on backend)">
+              <button class="field-btn" onclick="togglePw('cfg-cortex-api-key')">🔑</button>
+            </div>
+            <div class="field-hint">Set this if your backend has CORTEX_API_KEY configured. Saved locally in your browser only.</div>
+
+            <hr class="divider">
+            <div class="section-label">■ AI BACKENDS</div>
+            <div class="field-row">
+              <span class="field-label">ANTHROPIC API KEY:</span>
+              <input class="field-input pw" type="password" id="cfg-anthropic-key" placeholder="sk-ant-api03-xxxx">
+              <button class="field-btn" onclick="togglePw('cfg-anthropic-key')">🔑</button>
+            </div>
+            <div class="field-row">
+              <span class="field-label">LOCAL OLLAMA URL:</span>
+              <input class="field-input" type="text" id="cfg-ollama-url" placeholder="http://127.0.0.1:11434">
+            </div>
+
+            <hr class="divider">
+            <div class="section-label">■ NOTIFICATIONS</div>
+            <div class="field-row">
+              <span class="field-label">SLACK CHANNEL:</span>
+              <input class="field-input" type="text" id="cfg-slack-channel" placeholder="#cortex-updates">
+            </div>
+
+            <hr class="divider">
+            <div class="section-label">■ PRIVACY</div>
+            <div class="field-row" style="align-items:center;">
+              <span class="field-label">PRIVACY MODE (FORCE LOCAL):</span>
+              <label class="retro-check">
+                <div class="check-box" id="cfg-privacy-box"></div>
+                <span id="cfg-privacy-label" style="color:var(--red)">DISABLED</span>
+              </label>
+            </div>
+            <div class="field-hint">When enabled, all processing is forced through local Ollama. No data leaves your machine.</div>
+
+            <hr class="divider">
+            <div class="section-label">■ BACKEND SERVER</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+              <div class="dot" id="backend-launch-dot" style="background:#888;"></div>
+              <span style="font-family:var(--px);font-size:var(--fs-xxs);" id="backend-launch-status">STATUS UNKNOWN</span>
+              <button class="retro-btn success" id="backend-launch-btn" onclick="launchBackend()" style="margin-left:auto;">▶ LAUNCH BACKEND</button>
+              <button class="retro-btn" onclick="checkStatus()" style="font-size:7px;">↻ PING</button>
+            </div>
+            <div style="
+              font-family:var(--vt);font-size:16px;color:#555;
+              background:var(--dark);border:2px solid #444;
+              padding:8px 12px;line-height:1.8;margin-bottom:14px;
+            " id="backend-cmd-hint">
+              <span style="color:#55cc88;">$</span> <span style="color:#fff;">./start_backend.sh</span><br>
+              <span style="color:#888;font-size:14px;">— or open a Terminal and run the script above —</span>
+            </div>
+
+            <div style="margin-top:4px;display:flex;gap:8px;">
+              <button class="retro-btn primary" id="save-cfg-btn" onclick="saveConfig()">💾 SAVE CONFIGURATION</button>
+              <button class="retro-btn" onclick="loadConfig()">↻ RELOAD</button>
+            </div>
+            <div class="cfg-msg" id="cfg-msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: CONNECTORS                         -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-connectors">
+        <div class="win-panel full-view">
+          <div class="win-titlebar blue">
+            <span>🔌 APP CONNECTORS</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="retro-badge" id="connected-badge">0 CONNECTED</span>
+              <button class="win-closex" onclick="loadConnectors()">↻</button>
+            </div>
+          </div>
+          <div class="win-body scroll-body">
+            <div class="connectors-grid" id="connectors-grid">
+              <div class="loading-msg">Loading connectors...</div>
+            </div>
+            <hr class="divider">
+            <div id="source-tags-area" style="display:none;">
+              <div class="section-label">■ ACTIVE SOURCES</div>
+              <div id="source-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+            </div>
+            <div style="text-align:right;margin-top:8px;">
+              <button class="retro-btn" onclick="openCredModalById(null)">🔑 MANAGE CREDENTIALS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: MEMORY EXPLORER                    -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-memory">
+        <div class="win-panel full-view">
+          <div class="win-titlebar purple">
+            <span>🧠 MEMORY EXPLORER &amp; CONFLICT RESOLUTION</span>
+            <button class="win-closex" onclick="fetchMemoryUnits()">↻ REFRESH</button>
+          </div>
+          <div class="win-body scroll-body">
+            <div class="mem-table-wrap">
+              <table class="mem-table">
+                <thead>
+                  <tr>
+                    <th style="width:80px">ID</th>
+                    <th>CLAIM (PREVIEW)</th>
+                    <th style="width:80px">TIER</th>
+                    <th style="width:70px">CONF%</th>
+                    <th style="width:80px">DEPT</th>
+                    <th style="width:80px">SOURCE</th>
+                    <th style="width:80px">STATUS</th>
+                    <th style="width:110px">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody id="mem-tbody">
+                  <tr><td colspan="8" style="text-align:center;padding:16px;">Loading memory units...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="conflict-detail" class="conflict-box" style="display:none;">
+              <span class="conflict-label">⚠ CONFLICT DETAILS:</span>
+              <div id="conflict-text"></div>
+              <div class="conflict-actions">
+                <button class="retro-btn success" id="conflict-approve-btn">✓ APPROVE</button>
+                <button class="retro-btn danger" id="conflict-reject-btn">✕ REJECT</button>
+                <button class="retro-btn" onclick="closeConflict()">✕ DISMISS</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: AGENT ORCHESTRATION (Layer 11)     -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-agents">
+        <div class="win-panel full-view">
+          <div class="win-titlebar orange">
+            <span>🤖 AGENT ORCHESTRATION — LAYER 11</span>
+            <button class="win-closex">✕</button>
+          </div>
+          <div class="win-body scroll-body">
+
+            <!-- Agent Summary Bar -->
+            <div class="agent-summary-bar" id="agent-summary-bar">
+              <div class="summary-stat"><span class="stat-val" id="stat-total-agents">0</span><span class="stat-label">AGENTS</span></div>
+              <div class="summary-stat"><span class="stat-val" id="stat-skills-bound">0</span><span class="stat-label">SKILLS BOUND</span></div>
+              <div class="summary-stat"><span class="stat-val" id="stat-context-ready">0</span><span class="stat-label">CONTEXT READY</span></div>
+              <div class="summary-stat"><span class="stat-val" id="stat-external-agents">0</span><span class="stat-label">EXTERNAL</span></div>
+              <div class="summary-stat"><span class="stat-val" id="stat-reload-events">0</span><span class="stat-label">RELOADS</span></div>
+            </div>
+
+            <!-- ── A2A Gateway Panel ────────────────── -->
+            <div class="a2a-gateway-panel" id="a2a-gateway-panel">
+              <div class="a2a-header">
+                <span class="a2a-title">🌐 A2A GATEWAY</span>
+                <span class="a2a-url" id="a2a-url">/.well-known/agent.json</span>
+              </div>
+              <div class="a2a-body">
+                <div class="a2a-info-grid">
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">DISCOVERY</span>
+                    <span class="a2a-value" id="a2a-discovery-url">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">VERSION</span>
+                    <span class="a2a-value" id="a2a-version">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">EXPOSED SKILLS</span>
+                    <span class="a2a-value" id="a2a-skills-count">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">STATUS</span>
+                    <span class="a2a-value a2a-status" id="a2a-status">CHECKING...</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">MCP SSE</span>
+                    <span class="a2a-value" id="a2a-mcp-sse" style="color:#0ea5e9;">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">HMAC SIGNING</span>
+                    <span class="a2a-value" id="a2a-hmac-status">—</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                  <button class="retro-btn" onclick="refreshA2AGateway()">⟳ REFRESH</button>
+                  <button class="retro-btn" onclick="viewA2AJson()">{ } VIEW JSON</button>
+                  <button class="retro-btn" onclick="refreshDispatcherStatus()" style="border-color:#ff7b00;">📡 DISPATCHER</button>
+                </div>
+              </div>
+              <div class="a2a-json-preview" id="a2a-json-preview" style="display:none;"></div>
+            </div>
+
+            <!-- ── Webhook Dispatcher Status ────────── -->
+            <div class="a2a-gateway-panel" id="dispatcher-panel" style="display:none;margin-top:10px;border-color:#ff7b00;">
+              <div class="a2a-header" style="background:linear-gradient(90deg,#ff7b00 0%,#ff4785 100%);">
+                <span class="a2a-title" style="color:#fff;">📡 WEBHOOK DISPATCHER</span>
+                <span class="a2a-url" style="color:#ffe0c0;">Outbound retry queue</span>
+              </div>
+              <div class="a2a-body">
+                <div class="a2a-info-grid">
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">STATUS</span>
+                    <span class="a2a-value" id="disp-status" style="color:#00ff66;">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">QUEUE SIZE</span>
+                    <span class="a2a-value" id="disp-queue">—</span>
+                  </div>
+                  <div class="a2a-info-item">
+                    <span class="a2a-label">DEAD LETTERS</span>
+                    <span class="a2a-value" id="disp-dead-count" style="color:#ff4785;">—</span>
+                  </div>
+                </div>
+                <div id="disp-dead-list" style="margin-top:8px;font-family:var(--vt);font-size:13px;color:#888;max-height:120px;overflow-y:auto;"></div>
+              </div>
+            </div>
+
+            <!-- Agent Grid (dynamically rendered) -->
+            <div class="agent-card-grid" id="agent-card-grid">
+              <!-- Cards rendered by JS -->
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div style="display:flex; gap:8px; justify-content:center; margin:1.2rem 0; flex-wrap:wrap;">
+              <button class="retro-btn primary" onclick="showCreateAgentForm()" id="btn-add-agent">
+                ＋ CREATE INTERNAL AGENT
+              </button>
+              <button class="retro-btn" onclick="showExternalAgentForm()" id="btn-add-external" style="border-color:#0ea5e9;">
+                🌐 CONNECT EXTERNAL AGENT
+              </button>
+            </div>
+
+            <!-- Create Agent Form (hidden by default) -->
+            <div class="create-agent-form" id="create-agent-form" style="display:none;">
+              <div class="assign-header">── CREATE NEW AGENT ──</div>
+              <div class="form-row">
+                <label>ID:</label>
+                <input type="text" id="new-agent-id" class="retro-input" placeholder="my-custom-agent" />
+              </div>
+              <div class="form-row">
+                <label>Name:</label>
+                <input type="text" id="new-agent-name" class="retro-input" placeholder="My Custom Agent" />
+              </div>
+              <div class="form-row">
+                <label>Icon:</label>
+                <input type="text" id="new-agent-icon" class="retro-input" placeholder="🤖" value="🤖" style="width:60px;" />
+              </div>
+              <div class="form-row">
+                <label>Role:</label>
+                <select class="retro-select" id="new-agent-role">
+                  <option value="specialist">Specialist</option>
+                  <option value="orchestrator">Orchestrator</option>
+                  <option value="reviewer">Reviewer</option>
+                  <option value="synthesizer">Synthesizer</option>
+                  <option value="watcher">Watcher</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Dept:</label>
+                <select class="retro-select" id="new-agent-dept">
+                  <option value="shared">shared</option>
+                  <option value="engineering">engineering</option>
+                  <option value="sales">sales</option>
+                  <option value="marketing">marketing</option>
+                  <option value="ops">ops</option>
+                  <option value="hr">hr</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Description:</label>
+                <input type="text" id="new-agent-desc" class="retro-input" placeholder="What this agent does..." />
+              </div>
+              <div style="text-align:center; margin-top:.8rem;">
+                <button class="retro-btn primary" onclick="createNewAgent()">CREATE</button>
+                <button class="retro-btn" onclick="hideCreateAgentForm()">CANCEL</button>
+              </div>
+            </div>
+
+            <!-- ── External Agent Registration Form ──── -->
+            <div class="create-agent-form" id="external-agent-form" style="display:none;">
+              <div class="assign-header" style="color:#0ea5e9;">── 🌐 CONNECT EXTERNAL AGENT ──</div>
+              <p style="font-family:var(--px);font-size:9px;color:#666;margin:0 0 12px;">
+                Register an outside AI agent (Claude, GPT, custom bot) with Cortex.
+                The agent must expose a callback URL where tasks will be POSTed.
+                Tasks are signed with HMAC-SHA256 when CORTEX_WEBHOOK_SECRET is set.
+              </p>
+              <div class="form-row">
+                <label>Agent ID:</label>
+                <input type="text" id="ext-agent-id" class="retro-input" placeholder="ext-claude-bot" />
+              </div>
+              <div class="form-row">
+                <label>Name:</label>
+                <input type="text" id="ext-agent-name" class="retro-input" placeholder="External Claude Bot" />
+              </div>
+              <div class="form-row">
+                <label>Callback URL:</label>
+                <input type="text" id="ext-agent-url" class="retro-input" placeholder="https://my-agent.example.com/callback" />
+              </div>
+              <div class="form-row">
+                <label>Auth Token:</label>
+                <input type="password" id="ext-agent-token" class="retro-input" placeholder="Bearer token for outbound calls (optional)" />
+              </div>
+              <div class="form-row" style="margin-top:-4px;">
+                <label></label>
+                <span style="font-family:var(--px);font-size:7px;color:#888;line-height:1.8;">Cortex sends this token as Authorization: Bearer &lt;token&gt; when POSTing tasks to your webhook.</span>
+              </div>
+              <div class="form-row">
+                <label>Icon:</label>
+                <input type="text" id="ext-agent-icon" class="retro-input" placeholder="🌐" value="🌐" style="width:60px;" />
+              </div>
+              <div class="form-row">
+                <label>Role:</label>
+                <select class="retro-select" id="ext-agent-role">
+                  <option value="specialist">Specialist</option>
+                  <option value="orchestrator">Orchestrator</option>
+                  <option value="reviewer">Reviewer</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Dept:</label>
+                <select class="retro-select" id="ext-agent-dept">
+                  <option value="shared">shared</option>
+                  <option value="engineering">engineering</option>
+                  <option value="sales">sales</option>
+                  <option value="marketing">marketing</option>
+                  <option value="ops">ops</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Description:</label>
+                <input type="text" id="ext-agent-desc" class="retro-input" placeholder="What this external agent does..." />
+              </div>
+              <div style="text-align:center; margin-top:.8rem;">
+                <button class="retro-btn primary" onclick="registerExternalAgent()" style="border-color:#0ea5e9;">🌐 REGISTER</button>
+                <button class="retro-btn" onclick="hideExternalAgentForm()">CANCEL</button>
+              </div>
+            </div>
+
+            <!-- Agent Detail Panel (hidden by default) -->
+            <div class="agent-detail-panel" id="agent-detail-panel" style="display:none;">
+              <div class="assign-header" id="agent-detail-header">── AGENT DETAIL ──</div>
+              <div id="agent-detail-content"></div>
+            </div>
+
+            <!-- ── Reload Events Log ────────────────── -->
+            <div class="reload-events-panel" id="reload-events-panel" style="margin-top:14px;">
+              <div class="detail-section-title" style="margin-bottom:6px;">⟳ RECENT RELOAD EVENTS</div>
+              <div class="reload-events-list" id="reload-events-list">
+                <em style="color:#888;font-family:var(--px);font-size:9px;">No reload events yet.</em>
+              </div>
+            </div>
+
+            <div class="agent-msg" id="agent-msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: ORCHESTRATION LOOP                 -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-orch">
+        <div class="win-panel full-view">
+          <div class="win-titlebar dark">
+            <span>⚡ ORCHESTRATION LOOP &amp; LOGS</span>
+            <button class="win-closex">✕</button>
+          </div>
+          <div class="win-body orch-body">
+
+            <div class="orch-ctrl">
+              <div class="section-label">▣ PIPELINE CONTROL</div>
+              <div class="pipeline-btns">
+                <button class="retro-btn success" id="orch-start-btn" onclick="runPipeline()">▶ START PIPELINE</button>
+                <button class="retro-btn" id="orch-stop-btn" onclick="stopPipeline()" style="opacity:0.5;">■ STOP PIPELINE</button>
+                <button class="retro-btn danger" onclick="clearLogs()">🗑 CLEAR LOGS</button>
+              </div>
+              <hr class="divider">
+              <div class="section-label">▣ PIPELINE STEPS</div>
+              <div class="pipeline-steps" id="pipeline-steps">
+                <div class="step" id="step-connect">① CONNECT SOURCES</div>
+                <div class="step" id="step-fetch">② FETCH DATA</div>
+                <div class="step" id="step-analyze">③ ANALYZE</div>
+                <div class="step" id="step-distill">④ DISTILL</div>
+                <div class="step" id="step-conflict">⑤ CHECK CONFLICTS</div>
+                <div class="step" id="step-update">⑥ UPDATE SKILLS</div>
+                <div class="step" id="step-notify">⑦ NOTIFY</div>
+              </div>
+              <hr class="divider">
+              <div class="section-label">▣ RUN INFO</div>
+              <div class="run-info">
+                <div class="run-info-row"><span>LAST RUN:</span><span id="orch-last-run">N/A</span></div>
+                <div class="run-info-row"><span>STATUS:</span><span id="orch-status">IDLE</span></div>
+              </div>
+            </div>
+
+            <div class="orch-log">
+              <div class="section-label">▣ EXECUTION LOG</div>
+              <div class="terminal" id="orch-terminal" style="flex:1;height:auto;min-height:200px;">
+                <span class="t-line"><span class="t-time">[READY]</span> Orchestration console online.</span>
+                <span class="t-line"><span class="t-cursor"></span></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: KNOWLEDGE SEARCH                   -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-search">
+        <div class="win-panel full-view">
+          <div class="win-titlebar green">
+            <span>🔍 KNOWLEDGE SEARCH</span>
+            <button class="win-closex" onclick="clearSearch()">✕ CLEAR</button>
+          </div>
+          <div class="win-body scroll-body">
+
+            <!-- Search bar -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="search-query" class="field-input" style="flex:1;min-width:180px;"
+                     placeholder="Type to search knowledge base…"
+                     onkeydown="if(event.key==='Enter')runSearch()">
+              <select id="search-dept" class="retro-select" style="max-width:140px;">
+                <option value="">ALL DEPTS</option>
+                <option value="engineering">ENGINEERING</option>
+                <option value="hr">HR</option>
+                <option value="finance">FINANCE</option>
+                <option value="product">PRODUCT</option>
+                <option value="security">SECURITY</option>
+                <option value="legal">LEGAL</option>
+                <option value="shared">SHARED</option>
+              </select>
+              <select id="search-mode" class="retro-select" style="max-width:120px;">
+                <option value="hybrid">HYBRID</option>
+                <option value="semantic">SEMANTIC</option>
+                <option value="keyword">KEYWORD</option>
+              </select>
+              <button class="retro-btn primary" onclick="runSearch()">🔍 SEARCH</button>
+              <button class="retro-btn" onclick="rebuildSearchIndex()" title="Rebuild vector index">⟳ RE-INDEX</button>
+            </div>
+
+            <!-- Search stats bar -->
+            <div style="font-family:var(--px);font-size:var(--fs-xxs);color:#888;margin-bottom:10px;" id="search-stats-bar">
+              Vector index: <span id="search-indexed-count" style="color:var(--green);">--</span> chunks indexed &nbsp;|&nbsp;
+              Embeddings: <span id="search-embed-ready" style="color:var(--yellow);">checking…</span>
+            </div>
+
+            <!-- Results -->
+            <div id="search-results-area">
+              <div style="font-family:var(--px);font-size:var(--fs-xxs);color:#aaa;padding:20px 0;text-align:center;">
+                Enter a query above and press SEARCH or ↵
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: SYSTEM STATUS                      -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-status">
+        <div class="win-panel full-view">
+          <div class="win-titlebar pink">
+            <span>📡 SYSTEM STATUS</span>
+            <button class="win-closex" onclick="refreshFullStatus()">↻ REFRESH ALL</button>
+          </div>
+          <div class="win-body scroll-body">
+
+            <!-- ── Core services ── -->
+            <div class="section-label">■ CORE SERVICES</div>
+            <div class="status-row big">
+              <span class="status-key-big">AI ENGINE:</span>
+              <span class="dot" id="status-dot-ai"></span>
+              <span class="status-val" id="status-val-ai">CHECKING...</span>
+            </div>
+            <div class="status-row big">
+              <span class="status-key-big">LOCAL DATABASE:</span>
+              <span class="dot" id="status-dot-db"></span>
+              <span class="status-val" id="status-val-db">CHECKING...</span>
+            </div>
+            <div class="status-row big">
+              <span class="status-key-big">ORCH PIPELINE:</span>
+              <span class="dot" id="status-dot-pipe"></span>
+              <span class="status-val" id="status-val-pipe">IDLE</span>
+            </div>
+            <div class="status-row big">
+              <span class="status-key-big">PRIVACY MODE:</span>
+              <span class="dot" id="status-dot-priv"></span>
+              <span class="status-val" id="status-val-priv">DISABLED</span>
+            </div>
+
+            <!-- ── AI Providers ── -->
+            <hr class="divider">
+            <div class="section-label">■ AI PROVIDERS</div>
+            <div id="providers-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+              <div style="font-family:var(--px);font-size:var(--fs-xxs);color:#888;">Loading providers…</div>
+            </div>
+
+            <!-- ── Knowledge Base ── -->
+            <hr class="divider">
+            <div class="section-label">■ KNOWLEDGE BASE</div>
+            <div class="kb-stats-row">
+              <div class="kb-stat-big">
+                <span class="stat-label">RAW CHUNKS</span>
+                <span class="stat-val" id="status-raw-chunks">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">ACTIVE SKILLS</span>
+                <span class="stat-val" id="status-active-skills">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">MEMORY UNITS</span>
+                <span class="stat-val" id="status-memory-units">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">CONNECTORS</span>
+                <span class="stat-val" id="status-connectors">--</span>
+              </div>
+            </div>
+
+            <!-- ── Vector Search ── -->
+            <hr class="divider">
+            <div class="section-label">■ VECTOR SEARCH INDEX</div>
+            <div class="kb-stats-row" style="margin-bottom:8px;">
+              <div class="kb-stat-big">
+                <span class="stat-label">INDEXED CHUNKS</span>
+                <span class="stat-val" id="status-search-indexed">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">EMBEDDINGS</span>
+                <span class="stat-val" id="status-embed-ready">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">CACHE HITS</span>
+                <span class="stat-val" id="status-cache-hits">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">COST SAVED</span>
+                <span class="stat-val" id="status-cost-saved">$--</span>
+              </div>
+            </div>
+            <button class="retro-btn" onclick="rebuildSearchIndex()" style="margin-bottom:8px;">⟳ REBUILD SEARCH INDEX</button>
+
+            <!-- ── Pointer Memory ── -->
+            <hr class="divider">
+            <div class="section-label">■ POINTER MEMORY (SYNC DEDUP)</div>
+            <div class="kb-stats-row" style="margin-bottom:8px;">
+              <div class="kb-stat-big">
+                <span class="stat-label">DOCS SEEN</span>
+                <span class="stat-val" id="status-ptr-seen">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">DOCS SKIPPED</span>
+                <span class="stat-val" id="status-ptr-skipped">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">SKIP RATE</span>
+                <span class="stat-val" id="status-ptr-rate">--%</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">TOKENS SAVED</span>
+                <span class="stat-val" id="status-ptr-tokens">--</span>
+              </div>
+            </div>
+
+            <!-- ── Setup Checklist ── -->
+            <hr class="divider">
+            <div class="section-label">■ SETUP CHECKLIST</div>
+            <div id="setup-needed-list" style="font-family:var(--px);font-size:var(--fs-xxs);line-height:2.2;">
+              <span style="color:#888;">Loading…</span>
+            </div>
+
+            <!-- ── Audit Log ── -->
+            <hr class="divider">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div class="section-label" style="margin:0;">■ AUDIT LOG</div>
+              <button class="retro-btn" onclick="loadAuditLog()" style="font-size:6px;padding:3px 8px;">↻ REFRESH</button>
+            </div>
+            <div id="audit-log-list" style="
+              background:var(--dark);border:2px inset #888;
+              padding:8px;max-height:200px;overflow-y:auto;
+              font-family:var(--vt);font-size:15px;line-height:1.7;
+            ">
+              <span style="color:#888;">Loading audit log…</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════ -->
+      <!-- VIEW: AUDIT & INTEGRITY                  -->
+      <!-- ════════════════════════════════════════ -->
+      <div class="view" id="view-audit">
+        <div class="win-panel full-view">
+          <div class="win-titlebar pink">
+            <span>⚖ DATABASE INTEGRITY &amp; HALLUCINATION SHIELD</span>
+            <button class="win-closex" onclick="fetchIntegrityAudit()">↻ REFRESH</button>
+          </div>
+          <div class="win-body scroll-body">
+            
+            <!-- Live Shield Status Alert Card -->
+            <div id="integrity-shield-card" class="shield-card warning">
+              <div style="display:flex;align-items:center;gap:12px;width:100%;">
+                <span class="shield-icon" style="font-size:32px;">🛡️</span>
+                <div style="flex:1;">
+                  <div class="shield-title" id="integrity-shield-title" style="font-family:var(--px);font-size:var(--fs-sm);font-weight:bold;margin-bottom:4px;">INTEGRITY THREAT DETECTED</div>
+                  <div class="shield-desc" id="integrity-shield-desc" style="font-family:var(--px);font-size:var(--fs-xxs);color:#555;line-height:1.6;">Stale legacy atomic units found in database. AI model might hallucinate on obsolete data.</div>
+                </div>
+                <button class="retro-btn success" id="prune-btn" onclick="pruneDatabaseOrphans()" style="margin-left:auto;font-family:var(--px);font-size:var(--fs-xxs);">
+                  ⚡ PRUNE DATABASE ORPHANS
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats grid -->
+            <div class="kb-stats-row" style="margin-bottom:12px;margin-top:12px;">
+              <div class="kb-stat-big">
+                <span class="stat-label">FILESYSTEM CHUNKS</span>
+                <span class="stat-val" id="audit-fs-chunks">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">SIMULATED ACTIVE CLAIMS</span>
+                <span class="stat-val" id="audit-sim-claims">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">SQLITE CHUNKS</span>
+                <span class="stat-val" id="audit-db-chunks">--</span>
+              </div>
+              <div class="kb-stat-big">
+                <span class="stat-label">SQLITE ATOMIC UNITS</span>
+                <span class="stat-val" id="audit-db-units">--</span>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              
+              <!-- Left column: Orphaned units -->
+              <div class="win-panel" style="min-height:300px;">
+                <div class="win-titlebar dark" style="min-height:28px;">
+                  <span>🔴 OBSOLETE/ORPHANED SQLITE UNITS (<span id="audit-orphan-count">0</span>)</span>
+                </div>
+                <div class="win-body scroll-body" style="padding:8px;">
+                  <div class="mem-table-wrap" style="max-height:280px;margin-bottom:0;">
+                    <table class="mem-table">
+                      <thead>
+                        <tr>
+                          <th style="width:70px">ID</th>
+                          <th>STALE CLAIM</th>
+                          <th style="width:70px">DEPT</th>
+                        </tr>
+                      </thead>
+                      <tbody id="audit-orphans-tbody">
+                        <tr><td colspan="3" style="text-align:center;padding:12px;">No orphaned units.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right column: Missing chunks -->
+              <div class="win-panel" style="min-height:300px;">
+                <div class="win-titlebar blue" style="min-height:28px;">
+                  <span>🟡 UNINDEXED FILESYSTEM CHUNKS (<span id="audit-missing-count">0</span>)</span>
+                </div>
+                <div class="win-body scroll-body" style="padding:8px;">
+                  <div class="mem-table-wrap" style="max-height:280px;margin-bottom:0;">
+                    <table class="mem-table">
+                      <thead>
+                        <tr>
+                          <th style="width:70px">ID</th>
+                          <th>CHUNK TITLE</th>
+                          <th style="width:110px">SOURCE</th>
+                        </tr>
+                      </thead>
+                      <tbody id="audit-missing-tbody">
+                        <tr><td colspan="3" style="text-align:center;padding:12px;">No missing chunks.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /os-body -->
+
+  <!-- ── TASKBAR ── -->
+  <div class="os-taskbar">
+    <button class="start-btn" onclick="showView('dashboard')">
+      <span class="win-icon">⊞</span> Start
+    </button>
+    <div class="taskbar-sep"></div>
+    <div class="taskbar-item active">
+      <span class="t-dot"></span> CORTEX AI CONSOLE
+    </div>
+    <div class="taskbar-sep"></div>
+    <div class="taskbar-item" id="tb-pipeline-item" style="display:none;">
+      <span class="t-dot" style="background:var(--green2);animation:blink 0.8s step-end infinite;"></span> PIPELINE RUNNING
+    </div>
+    <div class="taskbar-clock" id="taskbar-clock">⊙ --:-- --</div>
+  </div>
+
+</div><!-- /os-shell -->
+
+<!-- ── RETRO CREDENTIAL MODAL ── -->
+<div class="modal-overlay" id="cred-modal" style="display:none;">
+  <div class="os-shell modal-shell">
+    <div class="os-titlebar">
+      <span class="title-text" id="modal-title-text">⬛ CONNECT APP</span>
+      <div class="title-btns">
+        <button class="title-btn close" onclick="closeCredModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="section-label" id="modal-desc-text">Enter credentials below.</div>
+      <div id="modal-fields"></div>
+      <div id="modal-error" class="cfg-msg error" style="display:none;"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="retro-btn primary" id="modal-connect-btn" onclick="submitCredModal()">✓ CONNECT</button>
+        <button class="retro-btn" onclick="closeCredModal()">✕ CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST NOTIFICATIONS ── -->
+<div id="toast-container"></div>
+
+<script src="app.js?v=2.11"></script>
 </body>
 </html>

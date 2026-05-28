@@ -78,3 +78,57 @@ class SkillGenerator:
             f.write(content)
             
         return str(skill_path)
+
+    def generate_context_md(self, skill: SkillDef, department: Department) -> str:
+        """Generate a CONTEXT.md file for a department skill.
+
+        CONTEXT.md contains the operational context that agents need when
+        they're bound to this department — policies, decisions, failure
+        patterns, security rules, and approval flows.
+
+        This is read by AgentContextAssembler during context injection.
+        """
+        from datetime import datetime, timezone
+
+        md = f"<!-- AUTO-GENERATED CONTEXT — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC -->\n"
+        md += f"<!-- Department: {department.value} | Skill: {skill.name} -->\n\n"
+        md += f"# {department.value.title()} — {skill.name.replace('-', ' ').title()} Context\n\n"
+
+        # Overview section
+        md += f"## Overview\n{skill.overview}\n\n"
+
+        # Prerequisites as context constraints
+        if skill.prerequisites:
+            md += "## Operating Constraints\n"
+            for prereq in skill.prerequisites:
+                md += f"- {prereq}\n"
+            md += "\n"
+
+        # Edge cases as "Never do this" rules
+        if skill.edge_cases:
+            md += "## Critical Rules & Failure Patterns\n"
+            for ec in skill.edge_cases:
+                md += f"- ⚠️ {ec}\n"
+            md += "\n"
+
+        # Key steps as reference procedures
+        if skill.steps:
+            md += "## Reference Procedures\n"
+            for i, step in enumerate(skill.steps[:10], 1):  # Cap at 10 for context brevity
+                md += f"{i}. {step}\n"
+            md += "\n"
+
+        return md
+
+    def save_context(self, skill: SkillDef, department: Department) -> str:
+        """Write CONTEXT.md alongside the SKILL.md for a given department/skill."""
+        dept_dir = self.base_output_dir / department.value / skill.name
+        dept_dir.mkdir(parents=True, exist_ok=True)
+
+        ctx_path = dept_dir / "CONTEXT.md"
+        content = self.generate_context_md(skill, department)
+
+        with open(ctx_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        return str(ctx_path)

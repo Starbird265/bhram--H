@@ -146,17 +146,61 @@ class LocalFileParser:
 
         return chunks
 
-    def ingest_directory(self) -> List[KnowledgeChunk]:
+    def parse_text(self, file_path: Path, default_department: Department) -> List[KnowledgeChunk]:
+        """Parses a plain text file into a single KnowledgeChunk."""
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        if len(content.split()) < 5:
+            return []
+
+        title = file_path.stem.replace("_", " ").replace("-", " ").title()
+
+        chunk = KnowledgeChunk(
+            id=str(uuid.uuid4()),
+            department=default_department,
+            knowledge_type=KnowledgeType.SOP,
+            source_type=SourceType.LOCAL_FILE,
+            source_identifier=str(file_path.name),
+            title=title,
+            content=content,
+            summary=content[:120].replace("\n", " ") + ("..." if len(content) > 120 else ""),
+            tags=[],
+            metadata=KnowledgeMetadata(
+                confidence_score=0.85,
+                source_reliability=1.0,
+                source_position=SourcePosition(file_path=str(file_path))
+            ),
+            processing_layer=ProcessingLayer.RAW,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+        )
+        return [chunk]
+
+    def ingest_directory(self, recursive: bool = True) -> List[KnowledgeChunk]:
         """
-        Scans the raw_data directory and parses all JSON and Markdown files.
-        Infers department from filename or content.
+        Scans the raw_data directory and parses all supported files.
+        Supports JSON, Markdown, and plain text files.
+        Optionally scans recursively into subdirectories.
         """
         all_chunks = []
         if not self.raw_data_dir.exists():
             print(f"[Layer 1] Warning: Directory {self.raw_data_dir} does not exist.")
             return all_chunks
 
-        for file_path in sorted(self.raw_data_dir.glob("*.*")):
+        pattern = "**/*.*" if recursive else "*.*"
+
+        for file_path in sorted(self.raw_data_dir.glob(pattern)):
+            if not file_path.is_file():
+                continue
+            # Skip hidden files and directories relative to raw_data_dir
+            try:
+                rel_parts = file_path.relative_to(self.raw_data_dir).parts
+                if any(part.startswith(".") for part in rel_parts):
+                    continue
+            except ValueError:
+                pass
+
             # Infer department from filename
             dept = Department.SHARED
             for d in Department:
@@ -171,8 +215,10 @@ class LocalFileParser:
                     all_chunks.extend(self.parse_json(file_path, dept))
                 elif file_path.suffix in (".md", ".markdown"):
                     all_chunks.extend(self.parse_markdown(file_path, dept))
+                elif file_path.suffix == ".txt":
+                    all_chunks.extend(self.parse_text(file_path, dept))
                 else:
-                    print(f"[Layer 1] Skipping unsupported format: {file_path.suffix}")
+                    pass  # Silently skip unsupported formats
             except Exception as e:
                 print(f"[Layer 1] Error parsing {file_path.name}: {e}")
 

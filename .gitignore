@@ -29,6 +29,14 @@ backend/knowledge_base/
 # ── Secrets ───────────────────────────────────────
 .env
 *.env.local
+.credentials.json
+.credentials.json.migrated.bak
+.credential_fields.json
+connector_state.json
+filter_recipes.json
+*.db
+*.db-wal
+*.db-shm
 
 # ── Misc ──────────────────────────────────────────
 .qodo/

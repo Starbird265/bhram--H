@@ -15,10 +15,13 @@ from pydantic import BaseModel
 
 from core.models import KnowledgeChunk, SkillDef, Department, KnowledgeType
 
+# Provider router for AI calls (Claude + Ollama + rule-based)
 try:
-    from openai import OpenAI
+    from providers.router import ProviderRouter
+    from providers import AIRequest
+    _ROUTER_AVAILABLE = True
 except ImportError:
-    OpenAI = None
+    _ROUTER_AVAILABLE = False
 
 
 class SynthesizedSkill(BaseModel):
@@ -54,8 +57,15 @@ class SkillAssembler:
     Uses AI for synthesis when available, falls back to rule-based assembly.
     """
 
-    def __init__(self):
-        self.client = OpenAI() if OpenAI and os.getenv("OPENAI_API_KEY") else None
+    def __init__(self, router=None):
+        if router:
+            self.router = router
+        elif _ROUTER_AVAILABLE:
+            self.router = ProviderRouter()
+        else:
+            self.router = None
+        # Backward compat
+        self.client = self.router
 
     def assemble_skill(
         self,
@@ -95,23 +105,49 @@ class SkillAssembler:
         chunks: List[KnowledgeChunk],
         department: Department
     ) -> SkillDef:
-        """Uses AI to synthesize chunks into a coherent skill document."""
+        """Uses the provider router (Claude/Ollama) to synthesize chunks into a skill."""
+        import asyncio
+        import json as json_mod
+
         chunks_text = ""
         for i, chunk in enumerate(chunks):
             chunks_text += f"\n[Chunk {i+1}] Type: {chunk.knowledge_type.value} | Confidence: {chunk.metadata.confidence_score}\n"
             chunks_text += f"Title: {chunk.title}\n"
             chunks_text += f"Content: {chunk.content}\n"
 
-        response = self.client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
+        request = AIRequest(
+            purpose="synthesize",
             messages=[
                 {"role": "system", "content": SYNTHESIS_SYSTEM_PROMPT},
                 {"role": "user", "content": f"Skill Name: {skill_name}\nDepartment: {department.value}\nDescription: {description}\n\nKnowledge Chunks:\n{chunks_text}"}
             ],
-            response_format=SynthesizedSkill,
+            response_schema=SynthesizedSkill,
+            temperature=0.3,
         )
 
-        result = response.choices[0].message.parsed
+        loop = asyncio.new_event_loop()
+        try:
+            response = loop.run_until_complete(self.router.complete(request))
+        finally:
+            loop.close()
+
+        if response.error:
+            print(f"[Layer 6] AI synthesis error: {response.error}. Falling back to rule-based.")
+            return self._rule_based_assemble(skill_name, description, chunks, department)
+
+        # Parse the response
+        result = None
+        if response.parsed and hasattr(response.parsed, 'overview'):
+            result = response.parsed
+        elif response.content:
+            try:
+                data = json_mod.loads(response.content)
+                result = SynthesizedSkill(**data)
+            except Exception:
+                pass
+
+        if not result:
+            return self._rule_based_assemble(skill_name, description, chunks, department)
 
         return SkillDef(
             name=skill_name,
@@ -125,6 +161,60 @@ class SkillAssembler:
             source_chunk_ids=[c.id for c in chunks]
         )
 
+    # ─── Dedup & Filtering Helpers ───────────────────────────────
+
+    @staticmethod
+    def _normalize_for_dedup(text: str) -> str:
+        """Normalize text for dedup comparison: lowercase, strip, collapse whitespace, remove punctuation."""
+        import re
+        text = text.lower().strip()
+        text = re.sub(r'[^\w\s]', '', text)       # remove punctuation
+        text = re.sub(r'\s+', ' ', text)           # collapse whitespace
+        return text
+
+    @staticmethod
+    def _is_operational_content(text: str) -> bool:
+        """Check if text contains operational signals (not just blog/personal content)."""
+        operational_keywords = [
+            "always", "never", "must", "do not", "don't", "ensure", "make sure",
+            "step", "deploy", "production", "staging", "database", "schema",
+            "migration", "security", "approval", "review", "merge", "test",
+            "ci", "cd", "pipeline", "rollback", "hotfix", "incident",
+            "budget", "deadline", "compliance", "audit", "policy", "rule",
+            "process", "workflow", "checklist", "escalate", "sign-off",
+            "tag", "release", "branch", "pr", "qa", "verify",
+        ]
+        lower = text.lower()
+        return any(kw in lower for kw in operational_keywords)
+
+    @staticmethod
+    def _extract_clean_lines(content: str) -> list:
+        """Split content into individual clean lines, filtering blanks."""
+        lines = []
+        for line in content.split('\n'):
+            stripped = line.strip().lstrip('-•*0123456789. ')
+            if stripped and len(stripped) > 10:
+                lines.append(stripped)
+        return lines
+
+    def _dedup_list(self, items: list, max_items: int = 20) -> list:
+        """Deduplicate a list of strings by normalized form. Keep first occurrence."""
+        seen = set()
+        result = []
+        for item in items:
+            norm = self._normalize_for_dedup(item)
+            # Also check if this is a substring of something already seen
+            if norm in seen:
+                continue
+            is_substring = any(norm in s or s in norm for s in seen if len(s) > 15)
+            if is_substring:
+                continue
+            seen.add(norm)
+            result.append(item)
+            if len(result) >= max_items:
+                break
+        return result
+
     # ─── Rule-Based Assembly ─────────────────────────────────────
 
     def _rule_based_assemble(
@@ -134,33 +224,58 @@ class SkillAssembler:
         chunks: List[KnowledgeChunk],
         department: Department
     ) -> SkillDef:
-        """Categorizes chunks by knowledge type and builds structured skill sections."""
+        """Categorizes chunks by knowledge type and builds structured, deduplicated skill sections."""
         prerequisites = []
         steps = []
         edge_cases = []
         examples = []
 
         for chunk in chunks:
-            content = f"**{chunk.title}**: {chunk.content}"
+            # Extract individual lines from content (not title — title is often a truncated copy)
+            lines = self._extract_clean_lines(chunk.content)
+            if not lines:
+                # Fallback: use content as a single entry
+                lines = [chunk.content.strip()] if chunk.content.strip() else []
 
-            if chunk.knowledge_type == KnowledgeType.SOP:
-                steps.append(content)
-            elif chunk.knowledge_type in [KnowledgeType.EDGE_CASE, KnowledgeType.FAILURE_PATTERN]:
-                edge_cases.append(content)
-            elif chunk.knowledge_type in [KnowledgeType.POLICY, KnowledgeType.SECURITY_RULE, KnowledgeType.GLOSSARY]:
-                prerequisites.append(content)
-            elif chunk.knowledge_type == KnowledgeType.DECISION:
-                prerequisites.append(f"[DECISION] {content}")
-            elif chunk.knowledge_type == KnowledgeType.TOOL_WORKFLOW:
-                steps.append(f"[TOOL] {content}")
-            elif chunk.knowledge_type == KnowledgeType.APPROVAL_FLOW:
-                steps.append(f"[APPROVAL REQUIRED] {content}")
-            elif chunk.knowledge_type == KnowledgeType.ESCALATION:
-                edge_cases.append(f"[ESCALATION PATH] {content}")
-            elif chunk.knowledge_type == KnowledgeType.CUSTOMER_CONTEXT:
-                prerequisites.append(f"[CLIENT CONTEXT] {content}")
-            elif chunk.knowledge_type == KnowledgeType.PREFERENCE:
-                edge_cases.append(f"[PREFERENCE] {content}")
+            for line in lines:
+                # Skip non-operational content (blog posts, personal stories, etc.)
+                if not self._is_operational_content(line):
+                    continue
+
+                # Truncate to first sentence if too long (>200 chars)
+                if len(line) > 200:
+                    # Cut at first sentence boundary
+                    for sep in ['. ', '! ', '? ']:
+                        idx = line.find(sep)
+                        if 20 < idx < 200:
+                            line = line[:idx + 1]
+                            break
+                    else:
+                        line = line[:200].rsplit(' ', 1)[0] + '...'
+
+                if chunk.knowledge_type == KnowledgeType.SOP:
+                    steps.append(line)
+                elif chunk.knowledge_type in [KnowledgeType.EDGE_CASE, KnowledgeType.FAILURE_PATTERN]:
+                    edge_cases.append(line)
+                elif chunk.knowledge_type in [KnowledgeType.POLICY, KnowledgeType.SECURITY_RULE, KnowledgeType.GLOSSARY]:
+                    prerequisites.append(line)
+                elif chunk.knowledge_type == KnowledgeType.DECISION:
+                    prerequisites.append(line)
+                elif chunk.knowledge_type == KnowledgeType.TOOL_WORKFLOW:
+                    steps.append(line)
+                elif chunk.knowledge_type == KnowledgeType.APPROVAL_FLOW:
+                    steps.append(line)
+                elif chunk.knowledge_type == KnowledgeType.ESCALATION:
+                    edge_cases.append(line)
+                elif chunk.knowledge_type == KnowledgeType.CUSTOMER_CONTEXT:
+                    prerequisites.append(line)
+                elif chunk.knowledge_type == KnowledgeType.PREFERENCE:
+                    edge_cases.append(line)
+
+        # Deduplicate each section
+        prerequisites = self._dedup_list(prerequisites, max_items=10)
+        steps = self._dedup_list(steps, max_items=20)
+        edge_cases = self._dedup_list(edge_cases, max_items=15)
 
         return SkillDef(
             name=skill_name,

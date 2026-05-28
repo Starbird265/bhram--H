@@ -62,6 +62,7 @@ class AgentConnector:
         """
         Triggers an actual webhook to reload the agent's context 
         window to absorb newly bound knowledge.
+        Uses HMAC-signed headers for authenticated delivery.
         """
         skills = self.get_agent_skills(agent_name)
         print(f"[AgentConnector] Triggering hot-reload for agent '{agent_name}'.")
@@ -70,8 +71,14 @@ class AgentConnector:
         webhook_url = os.getenv(f"AGENT_WEBHOOK_{agent_name.upper()}")
         if webhook_url:
             try:
-                print(f"[AgentConnector] Sending payload to {webhook_url}...")
-                response = requests.post(webhook_url, json={"agent": agent_name, "active_skills": skills}, timeout=5)
+                from middleware.webhook_security import build_authenticated_headers
+                payload = {"agent": agent_name, "active_skills": skills, "event": "skill_reload"}
+                headers = build_authenticated_headers(payload=payload)
+
+                print(f"[AgentConnector] Sending signed payload to {webhook_url}...")
+                response = requests.post(
+                    webhook_url, json=payload, headers=headers, timeout=5
+                )
                 if response.status_code == 200:
                     print(f"[AgentConnector] Agent '{agent_name}' successfully reloaded.")
                 else:

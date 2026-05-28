@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORTEX AI – ORCHESTRATION CONSOLE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:   #f0e6d0;
+  --cream2:  #e8dcc0;
+  --cream3:  #faf6ee;
+  --pink:    #ff4785;
+  --blue:    #2244cc;
+  --blue2:   #3355dd;
+  --green:   #00bb44;
+  --green2:  #00ff66;
+  --yellow:  #ffcc00;
+  --orange:  #ff6600;
+  --purple:  #7733cc;
+  --red:     #cc2233;
+  --dark:    #1a1a2e;
+  --ink:     #0d0d0d;
+  --white:   #ffffff;
+  --border:  #3a3a3a;
+  --px: 'Press Start 2P', monospace;
+  --vt: 'VT323', monospace;
+  --shadow-raised: inset -2px -2px 0 #888, inset 2px 2px 0 #fff;
+  --shadow-sunken: inset 2px 2px 0 #888, inset -2px -2px 0 #fff;
+  --shadow-panel:  2px 2px 0 #888, 4px 4px 0 #ccc;
+}
+
+body {
+  background: #2a2a3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: var(--px);
+  overflow: hidden;
+}
+
+/* ── OS SHELL ──────────────────────────────────────────── */
+.os-shell {
+  width: 1360px;
+  height: 900px;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 3px var(--dark), 8px 8px 0 var(--dark);
+  overflow: hidden;
+}
+
+/* ── TITLE BAR ─────────────────────────────────────────── */
+.os-titlebar {
+  height: 32px;
+  background: linear-gradient(to right, var(--blue) 0%, var(--blue2) 60%, #6688ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--ink);
+}
+.os-titlebar .title-text {
+  font-family: var(--px);
+  font-size: 8px;
+  color: #fff;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #0005;
+}
+.title-btns { display: flex; gap: 3px; }
+.title-btn {
+  width: 20px; height: 18px;
+  background: var(--cream2);
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #888;
+  border-bottom: 2px solid #888;
+  font-size: 10px;
+  font-family: var(--px);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  color: var(--ink);
+  line-height: 1;
+}
+.title-btn.close { background: #ee3333; color: #fff; }
+.title-btn:active { border-color: #888 #fff #fff #888; }
+
+/* ── MAIN BODY ──────────────────────────────────────────── */
+.os-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+/* ── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  width: 188px;
+  background: var(--cream2);
+  border-right: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 14px 10px;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  background: var(--dark);
+}
+.brain-pixel {
+  width: 64px; height: 64px;
+  margin: 0 auto 8px;
+  display: grid;
+  grid-template-columns: repeat(8,8px);
+  gap: 0;
+}
+.bp { width: 8px; height: 8px; }
+.logo-name {
+  font-family: var(--px);
+  font-size: 11px;
+  color: var(--pink);
+  letter-spacing: 2px;
+  display: block;
+  text-shadow: 0 0 8px var(--pink);
+}
+.logo-ver { font-family: var(--px); font-size: 6px; color: #888; margin-top: 4px; display: block; }
+
+.menu-section {
+  padding: 8px 0;
+  border-bottom: 2px solid var(--border);
+}
+.menu-label {
+  font-family: var(--px);
+  font-size: 6px;
+  color: var(--blue);
+  padding: 4px 10px;
+  letter-spacing: 1px;
+  display: block;
+  background: var(--blue);
+  color: #fff;
+  margin-bottom: 4px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-family: var(--px);
+  font-size: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+.menu-item:hover { background: var(--blue); color: #fff; }
+.menu-item.active {
+  background: var(--pink);
+  color: #fff;
+}
+.menu-item .icon { font-size: 12px; min-width: 16px; }
+
+.sys-time {
+  margin-top: auto;
+  border-top: 2px solid var(--border);
+  padding: 10px;
+  background: var(--dark);
+  text-align: center;
+}
+.sys-time .time-label {
+  font-family: var(--px);
+  font-size: 6px;
+  color: var(--yellow);
+  display: block;
+  margin-bottom: 4px;
+}
+.sys-time .time-val {
+  font-family: var(--vt);
+  font-size: 20px;
+  color: var(--green2);
+  display: block;
+  letter-spacing: 2px;
+}
+.sys-time .date-val {
+  font-family: var(--vt);
+  font-size: 16px;
+  color: #88ffaa;
+  display: block;
+}
+
+/* ── MAIN PANELS GRID ───────────────────────────────────── */
+.panels-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 220px;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+  align-content: start;
+}
+
+/* ── WINDOW PANEL ──────────────────────────────────────── */
+.win-panel {
+  background: var(--cream3);
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #888;
+  border-bottom: 2px solid #888;
+  box-shadow: 2px 2px 0 var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.win-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  font-family: var(--px);
+  font-size: 7px;
+  color: #fff;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.win-titlebar.blue  { background: linear-gradient(to right, var(--blue), var(--blue2)); }
+.win-titlebar.pink  { background: linear-gradient(to right, var(--pink), #ff77aa); }
+.win-titlebar.green { background: linear-gradient(to right, #006633, #009944); }
+.win-titlebar.purple{ background: linear-gradient(to right, var(--purple), #9944ee); }
+.win-titlebar.orange{ background: linear-gradient(to right, var(--orange), #ff9933); }
+.win-titlebar.dark  { background: linear-gradient(to right, var(--dark), #334); }
+
+.win-closex {
+  font-size: 10px;
+  color: #fff;
+  background: var(--red);
+  border: none;
+  width: 16px; height: 14px;
+  cursor: pointer;
+  font-family: var(--px);
+  display: flex; align-items: center; justify-content: center;
+  border-top: 1px solid #ff9999;
+  border-left: 1px solid #ff9999;
+  border-right: 1px solid #881111;
+  border-bottom: 1px solid #881111;
+  line-height: 1;
+  font-size: 8px;
+}
+
+.win-body { padding: 8px; flex: 1; overflow: hidden; }
+
+/* ── FORM CONTROLS ─────────────────────────────────────── */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.field-label {
+  font-family: var(--px);
+  font-size: 6px;
+  color: var(--ink);
+  min-width: 110px;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+.field-input {
+  flex: 1;
+  height: 22px;
+  background: var(--white);
+  border-top: 2px solid #888;
+  border-left: 2px solid #888;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  font-family: var(--vt);
+  font-size: 16px;
+  color: var(--ink);
+  padding: 0 6px;
+  outline: none;
+  letter-spacing: 1px;
+}
+.field-input:focus { border-color: var(--blue) #ccc #ccc var(--blue); }
+.field-input.pw { letter-spacing: 4px; color: #555; }
+.field-btn {
+  width: 26px; height: 22px;
+  background: var(--cream2);
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #888;
+  border-bottom: 2px solid #888;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Buttons */
+.retro-btn {
+  font-family: var(--px);
+  font-size: 7px;
+  color: var(--ink);
+  background: var(--cream2);
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #888;
+  border-bottom: 2px solid #888;
+  padding: 6px 14px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.retro-btn:active { border-color: #888 #fff #fff #888; }
+.retro-btn.primary { background: var(--blue); color: #fff; }
+.retro-btn.success { background: var(--green); color: #fff; border-top-color: #88ffaa; border-left-color: #88ffaa; border-right-color: #003311; border-bottom-color: #003311; }
+.retro-btn.danger  { background: var(--red);  color: #fff; border-top-color: #ff9999; border-left-color: #ff9999; border-right-color: #550000; border-bottom-color: #550000; }
+.retro-btn.pink    { background: var(--pink); color: #fff; }
+
+/* Checkbox */
+.retro-check {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--px); font-size: 7px; color: var(--ink); cursor: pointer;
+}
+.check-box {
+  width: 14px; height: 14px;
+  background: #fff;
+  border-top: 2px solid #888;
+  border-left: 2px solid #888;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+.check-box.checked::after { content: '✓'; color: var(--ink); font-size: 10px; }
+
+/* Status dots */
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,.3);
+  flex-shrink: 0;
+}
+.dot.green  { background: var(--green);  box-shadow: 0 0 6px var(--green2); }
+.dot.yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.dot.red    { background: var(--red);    box-shadow: 0 0 6px #ff6666; }
+
+/* Status rows */
+.status-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+  font-family: var(--px); font-size: 6px; color: var(--ink);
+}
+.status-val { font-family: var(--px); font-size: 6px; }
+.status-val.green  { color: var(--green);  }
+.status-val.yellow { color: var(--yellow); }
+.status-val.red    { color: var(--red); }
+.status-val.white  { color: var(--ink); }
+
+/* ── KNOWLEDGE BASE ─────────────────────────────────────── */
+.kb-stat {
+  background: var(--dark);
+  border: 2px solid var(--border);
+  border-top-color: #555; border-left-color: #555;
+  padding: 8px 6px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.kb-stat .stat-label { font-family: var(--px); font-size: 6px; color: #aaa; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+.kb-stat .stat-val   { font-family: var(--vt); font-size: 28px; color: var(--green2); letter-spacing: 2px; display: block; }
+
+.brain-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  padding: 4px;
+  background: var(--dark);
+  border: 2px solid var(--border);
+  border-top-color: #555; border-left-color: #555;
+}
+.brain-svg { width: 80px; height: 60px; }
+
+/* ── MEMORY TABLE ───────────────────────────────────────── */
+.mem-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--px);
+  font-size: 6px;
+}
+.mem-table th {
+  background: var(--blue);
+  color: #fff;
+  padding: 5px 4px;
+  text-align: left;
+  border-right: 1px solid rgba(255,255,255,0.2);
+  font-size: 5.5px;
+  letter-spacing: 0.3px;
+}
+.mem-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--cream2);
+  color: var(--ink);
+  font-size: 5.5px;
+}
+.mem-table tr:nth-child(even) td { background: rgba(0,0,0,0.03); }
+.mem-table tr:hover td { background: rgba(34,68,204,0.08); }
+.mem-table .scrollable { max-height: 120px; overflow-y: auto; display: block; }
+
+.tag {
+  display: inline-block;
+  font-family: var(--px);
+  font-size: 5px;
+  padding: 2px 5px;
+  letter-spacing: 0.3px;
+}
+.tag.active   { background: var(--green);  color: #fff; }
+.tag.conflict { background: var(--yellow); color: var(--ink); }
+.tag.idle     { background: #aaa; color: #fff; }
+
+/* Conflict box */
+.conflict-box {
+  background: var(--dark);
+  border: 2px solid var(--yellow);
+  padding: 8px;
+  margin-top: 8px;
+  font-family: var(--vt);
+  font-size: 16px;
+  color: var(--yellow);
+  line-height: 1.4;
+}
+.conflict-box .conflict-label {
+  font-family: var(--px);
+  font-size: 6px;
+  color: #fff;
+  display: block;
+  margin-bottom: 4px;
+}
+.conflict-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+/* ── SELECT ──────────────────────────────────────────────── */
+.retro-select {
+  font-family: var(--px);
+  font-size: 5.5px;
+  background: #fff;
+  border-top: 2px solid #888;
+  border-left: 2px solid #888;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  padding: 4px 6px;
+  color: var(--ink);
+  height: 22px;
+  outline: none;
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+.agent-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--cream2);
+}
+.agent-icon { font-size: 18px; min-width: 24px; }
+.agent-label { font-family: var(--px); font-size: 6px; color: var(--ink); min-width: 110px; line-height: 1.5; }
+
+/* ── CONNECTORS ─────────────────────────────────────────── */
+.connectors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.connector-card {
+  background: var(--cream2);
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #888;
+  border-bottom: 2px solid #888;
+  padding: 8px 6px;
+  text-align: center;
+  cursor: pointer;
+}
+.connector-card:hover { background: #e0d4bc; }
+.connector-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+.connector-name { font-family: var(--px); font-size: 5.5px; color: var(--ink); display: block; margin-bottom: 2px; }
+.connector-tier { font-family: var(--px); font-size: 5px; display: block; margin-bottom: 2px; }
+.connector-tier.t1 { color: var(--blue); }
+.connector-tier.t2 { color: var(--purple); }
+.connector-status { font-family: var(--px); font-size: 5.5px; display: block; }
+.connector-status.connected    { color: var(--green); }
+.connector-status.disconnected { color: var(--red); }
+.connector-add {
+  background: var(--cream2);
+  border-top: 2px solid #fff; border-left: 2px solid #fff;
+  border-right: 2px solid #888; border-bottom: 2px solid #888;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; cursor: pointer; padding: 8px 6px;
+}
+.connector-add span { font-family: var(--px); font-size: 5.5px; color: var(--ink); text-align: center; }
+.connector-add .plus { font-size: 20px; color: var(--blue); line-height: 1; }
+
+/* ── TERMINAL ────────────────────────────────────────────── */
+.terminal {
+  background: #0d0d0d;
+  border-top: 2px solid #888;
+  border-left: 2px solid #888;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  padding: 8px;
+  font-family: var(--vt);
+  font-size: 16px;
+  color: var(--green2);
+  line-height: 1.5;
+  overflow-y: auto;
+  height: 170px;
+  letter-spacing: 0.5px;
+}
+.terminal .t-line { display: block; }
+.terminal .t-line .t-time { color: #55cc88; }
+.terminal .t-cursor {
+  display: inline-block;
+  width: 10px; height: 14px;
+  background: var(--green2);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.pipeline-btns { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+/* ── DIVIDER ────────────────────────────────────────────── */
+.divider { border: none; border-top: 1px solid #ccc; border-bottom: 1px solid #fff; margin: 8px 0; }
+
+/* ── SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: var(--cream2); border-left: 1px solid #ccc; }
+::-webkit-scrollbar-thumb {
+  background: var(--cream2);
+  border-top: 2px solid #fff; border-left: 2px solid #fff;
+  border-right: 2px solid #888; border-bottom: 2px solid #888;
+}
+::-webkit-scrollbar-button { background: var(--cream2); height: 12px;
+  border-top: 2px solid #fff; border-left: 2px solid #fff;
+  border-right: 2px solid #888; border-bottom: 2px solid #888;
+}
+
+/* ── TASKBAR ────────────────────────────────────────────── */
+.os-taskbar {
+  height: 34px;
+  background: var(--cream2);
+  border-top: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.start-btn {
+  height: 26px;
+  padding: 0 12px;
+  background: var(--cream2);
+  border-top: 2px solid #fff; border-left: 2px solid #fff;
+  border-right: 2px solid #888; border-bottom: 2px solid #888;
+  font-family: var(--px); font-size: 8px; color: var(--ink);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  font-weight: bold;
+}
+.start-btn .win-icon { font-size: 14px; }
+.start-btn:active { border-color: #888 #fff #fff #888; }
+.taskbar-sep { width: 2px; height: 22px; background: #888; box-shadow: 1px 0 0 #fff; margin: 0 2px; }
+.taskbar-item {
+  height: 24px; padding: 0 10px;
+  background: var(--cream2);
+  border-top: 2px solid #888; border-left: 2px solid #888;
+  border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+  font-family: var(--px); font-size: 6.5px; color: var(--ink);
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+}
+.taskbar-item .t-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); }
+.taskbar-clock {
+  margin-left: auto;
+  height: 24px; padding: 0 10px;
+  background: var(--cream2);
+  border-top: 2px solid #888; border-left: 2px solid #888;
+  border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+  font-family: var(--px); font-size: 7px; color: var(--ink);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── GRID LAYOUT ────────────────────────────────────────── */
+.panel-config      { grid-column: 1; grid-row: 1; }
+.panel-status      { grid-column: 2; grid-row: 1; }
+.panel-kb          { grid-column: 3; grid-row: 1 / 3; }
+.panel-memory      { grid-column: 1; grid-row: 2; }
+.panel-agent       { grid-column: 2; grid-row: 2; }
+.panel-connectors  { grid-column: 1; grid-row: 3; }
+.panel-orch        { grid-column: 2 / 4; grid-row: 3; }
+
+/* ── AGENT ASSIGN HEADER ─────────────────────────────────── */
+.assign-header {
+  text-align: center;
+  font-family: var(--px);
+  font-size: 6.5px;
+  color: var(--pink);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cream2);
+}
+
+/* ── PIPELINE LABEL ─────────────────────────────────────── */
+.pipeline-label {
+  font-family: var(--px); font-size: 6.5px; color: var(--ink);
+  margin-bottom: 6px; letter-spacing: 0.5px;
+}
+
+/* ── ORCH BODY FLEX ─────────────────────────────────────── */
+.orch-flex { display: flex; gap: 8px; height: 100%; }
+.orch-ctrl { width: 140px; flex-shrink: 0; }
+.orch-log  { flex: 1; display: flex; flex-direction: column; }
+
+/* ── STATUS SECTION ─────────────────────────────────────── */
+.status-section {
+  display: flex; flex-direction: column; gap: 0;
+}
+.status-group {
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--cream2);
+}
+.status-group:last-child { border-bottom: none; }
+.status-date {
+  font-family: var(--vt); font-size: 16px;
+  color: var(--ink); letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<div class="os-shell">
+
+  <!-- ── TITLE BAR ── -->
+  <div class="os-titlebar">
+    <span class="title-text">⬛ CORTEX AI – ORCHESTRATION CONSOLE</span>
+    <div class="title-btns">
+      <button class="title-btn">_</button>
+      <button class="title-btn">□</button>
+      <button class="title-btn close">✕</button>
+    </div>
+  </div>
+
+  <!-- ── BODY ── -->
+  <div class="os-body">
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <!-- Pixel Brain SVG -->
+        <svg width="64" height="56" viewBox="0 0 64 56" style="display:block;margin:0 auto 8px;">
+          <rect x="20" y="4"  width="8"  height="8"  fill="#ff4785"/>
+          <rect x="28" y="4"  width="8"  height="8"  fill="#ff4785"/>
+          <rect x="36" y="4"  width="8"  height="8"  fill="#ff4785"/>
+          <rect x="12" y="12" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="20" y="12" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="28" y="12" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="36" y="12" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="44" y="12" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="8"  y="20" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="16" y="20" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="24" y="20" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="32" y="20" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="40" y="20" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="48" y="20" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="8"  y="28" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="16" y="28" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="24" y="28" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="32" y="28" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="40" y="28" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="48" y="28" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="12" y="36" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="20" y="36" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="28" y="36" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="36" y="36" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="44" y="36" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="20" y="44" width="8"  height="8"  fill="#ff4785"/>
+          <rect x="28" y="44" width="8"  height="8"  fill="#ff77bb"/>
+          <rect x="36" y="44" width="8"  height="8"  fill="#ff4785"/>
+          <!-- circuit lines -->
+          <rect x="4"  y="24" width="4"  height="2"  fill="#00ff66"/>
+          <rect x="4"  y="30" width="4"  height="2"  fill="#00ff66"/>
+          <rect x="56" y="24" width="4"  height="2"  fill="#00ff66"/>
+          <rect x="56" y="30" width="4"  height="2"  fill="#00ff66"/>
+        </svg>
+        <span class="logo-name">CORTEX AI</span>
+        <span class="logo-ver">v1.0.0</span>
+      </div>
+
+      <div class="menu-section">
+        <span class="menu-label">■ MAIN MENU</span>
+        <button class="menu-item active"><span class="icon">🏠</span> DASHBOARD</button>
+        <button class="menu-item"><span class="icon">⚙</span> CONFIGURATION</button>
+        <button class="menu-item"><span class="icon">🔌</span> CONNECTORS</button>
+        <button class="menu-item"><span class="icon">🗂</span> MEMORY EXPLORER</button>
+        <button class="menu-item"><span class="icon">🤖</span> AGENT PROVISIONING</button>
+        <button class="menu-item"><span class="icon">🔄</span> ORCHESTRATION LOOP</button>
+        <button class="menu-item"><span class="icon">📡</span> SYSTEM STATUS</button>
+        <button class="menu-item"><span class="icon">📊</span> STATS</button>
+      </div>
+
+      <div class="sys-time">
+        <span class="time-label">⊙ SYSTEM TIME</span>
+        <span class="date-val" id="sys-date">2025-05-20</span>
+        <span class="time-val" id="sys-time">10:42:35</span>
+      </div>
+    </div>
+
+    <!-- ── PANELS GRID ── -->
+    <div class="panels-area">
+
+      <!-- ── CONFIG SETTINGS ── -->
+      <div class="win-panel panel-config">
+        <div class="win-titlebar blue">
+          <span>⚙ CONFIGURATION SETTINGS</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body">
+          <div class="field-row">
+            <span class="field-label">DATA SOURCES PATH:</span>
+            <input class="field-input" type="text" value="C:\Data\Cortex\Sources">
+            <button class="field-btn">…</button>
+          </div>
+          <div class="field-row">
+            <span class="field-label">ANTHROPIC API KEY:</span>
+            <input class="field-input pw" type="password" value="sk-ant-api03-xxxxxxxxxxxxxxxx">
+            <button class="field-btn">🔑</button>
+          </div>
+          <div class="field-row">
+            <span class="field-label">LOCAL OLLAMA URL:</span>
+            <input class="field-input" type="text" value="http://127.0.0.1:11434">
+          </div>
+          <div class="field-row">
+            <span class="field-label">SLACK CHANNEL:</span>
+            <input class="field-input" type="text" value="#cortex-updates">
+          </div>
+          <div class="field-row">
+            <span class="field-label">PRIVACY MODE:</span>
+            <label class="retro-check">
+              <div class="check-box checked" id="privacy-box"></div>
+              <span id="privacy-label" style="color:var(--green)">ENABLED</span>
+            </label>
+          </div>
+          <div style="text-align:right; margin-top:4px;">
+            <button class="retro-btn primary">💾 SAVE CONFIG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SYSTEM STATUS ── -->
+      <div class="win-panel panel-status">
+        <div class="win-titlebar pink">
+          <span>📡 SYSTEM STATUS</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body status-section">
+          <div class="status-group">
+            <div class="status-row">
+              <span style="min-width:130px">CLAUDE AI:</span>
+              <span class="dot green"></span>
+              <span class="status-val green">CONNECTED</span>
+            </div>
+            <div class="status-row">
+              <span style="min-width:130px">LOCAL DATABASE:</span>
+              <span class="dot green"></span>
+              <span class="status-val green">CONNECTED</span>
+            </div>
+            <div class="status-row">
+              <span style="min-width:130px">ORCH PIPELINE:</span>
+              <span class="dot yellow"></span>
+              <span class="status-val yellow">IDLE</span>
+            </div>
+          </div>
+          <div class="status-group">
+            <div class="status-row">
+              <span style="min-width:130px">LAST RUN:</span>
+              <span class="status-date">2025-05-20&nbsp;10:35:12</span>
+            </div>
+            <div class="status-row">
+              <span style="min-width:130px">NEXT RUN:</span>
+              <span class="status-val green">SCHEDULED</span>
+            </div>
+          </div>
+          <div style="text-align:right; margin-top:4px;">
+            <button class="retro-btn" onclick="refreshStatus()">↻ REFRESH STATUS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── KNOWLEDGE BASE STATS ── -->
+      <div class="win-panel panel-kb">
+        <div class="win-titlebar green">
+          <span>📦 KNOWLEDGE BASE STATS</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body">
+          <div class="kb-stat">
+            <span class="stat-label">RAW CHUNKS</span>
+            <span class="stat-val" id="raw-chunks">12,487</span>
+          </div>
+          <div class="kb-stat">
+            <span class="stat-label">ACTIVE SKILLS</span>
+            <span class="stat-val" id="active-skills">256</span>
+          </div>
+          <div class="brain-container">
+            <svg class="brain-svg" viewBox="0 0 80 60">
+              <!-- Pixel brain small -->
+              <rect x="25" y="4"  width="6"  height="6"  fill="#ff4785"/>
+              <rect x="31" y="4"  width="6"  height="6"  fill="#ff4785"/>
+              <rect x="37" y="4"  width="6"  height="6"  fill="#ff4785"/>
+              <rect x="19" y="10" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="25" y="10" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="31" y="10" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="37" y="10" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="43" y="10" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="13" y="16" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="19" y="16" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="25" y="16" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="31" y="16" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="37" y="16" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="43" y="16" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="49" y="16" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="13" y="22" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="19" y="22" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="25" y="22" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="31" y="22" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="37" y="22" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="43" y="22" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="49" y="22" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="19" y="28" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="25" y="28" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="31" y="28" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="37" y="28" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="43" y="28" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="25" y="34" width="6"  height="6"  fill="#ff4785"/>
+              <rect x="31" y="34" width="6"  height="6"  fill="#ff77bb"/>
+              <rect x="37" y="34" width="6"  height="6"  fill="#ff4785"/>
+              <!-- brackets -->
+              <rect x="4"  y="10" width="4" height="2" fill="#00ff66"/>
+              <rect x="4"  y="10" width="2" height="24" fill="#00ff66"/>
+              <rect x="4"  y="32" width="4" height="2" fill="#00ff66"/>
+              <rect x="72" y="10" width="4" height="2" fill="#00ff66"/>
+              <rect x="74" y="10" width="2" height="24" fill="#00ff66"/>
+              <rect x="72" y="32" width="4" height="2" fill="#00ff66"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MEMORY EXPLORER ── -->
+      <div class="win-panel panel-memory">
+        <div class="win-titlebar purple">
+          <span>🧠 MEMORY EXPLORER &amp; CONFLICT RESOLUTION</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body">
+          <div style="overflow-y:auto; max-height:118px; border-top:2px solid #888; border-left:2px solid #888; border-right:2px solid #fff; border-bottom:2px solid #fff;">
+            <table class="mem-table" style="width:100%">
+              <thead>
+                <tr>
+                  <th style="width:70px">ID</th>
+                  <th>CONTENT (PREVIEW)</th>
+                  <th style="width:70px">SOURCE</th>
+                  <th style="width:60px">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MEM-0001</td>
+                  <td>User prefers dark mode...</td>
+                  <td>Obsidian</td>
+                  <td><span class="tag active">ACTIVE</span></td>
+                </tr>
+                <tr>
+                  <td>MEM-0002</td>
+                  <td>Architecture uses micro...</td>
+                  <td>GitHub</td>
+                  <td><span class="tag active">ACTIVE</span></td>
+                </tr>
+                <tr class="selected-row">
+                  <td>MEM-0003</td>
+                  <td>API rate limit issue...</td>
+                  <td>Slack</td>
+                  <td><span class="tag conflict">CONFLICT</span></td>
+                </tr>
+                <tr>
+                  <td>MEM-0004</td>
+                  <td>Use pytest for testing...</td>
+                  <td>Local Folder</td>
+                  <td><span class="tag active">ACTIVE</span></td>
+                </tr>
+                <tr>
+                  <td>MEM-0005</td>
+                  <td>Security audit required...</td>
+                  <td>Notion</td>
+                  <td><span class="tag conflict">CONFLICT</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="conflict-box">
+            <span class="conflict-label">⚠ CONFLICT DETAILS:</span>
+            Conflicting memory: API rate limit issue...<br>
+            Sources disagree on resolution strategy.
+          </div>
+          <div class="conflict-actions">
+            <button class="retro-btn success">✓ APPROVE</button>
+            <button class="retro-btn danger">✕ REJECT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AGENT PROVISIONING ── -->
+      <div class="win-panel panel-agent">
+        <div class="win-titlebar orange">
+          <span>🤖 AGENT PROVISIONING</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body">
+          <div class="assign-header">── ASSIGN DISTILLED SKILLS TO AGENTS ──</div>
+          <div class="agent-row">
+            <span class="agent-icon">💻</span>
+            <span class="agent-label">CODE REVIEWER:</span>
+            <select class="retro-select">
+              <option>Security Best Practices</option>
+              <option>Code Quality Metrics</option>
+              <option>Performance Analysis</option>
+            </select>
+          </div>
+          <div class="agent-row">
+            <span class="agent-icon">🏗</span>
+            <span class="agent-label">ARCHITECT:</span>
+            <select class="retro-select">
+              <option>System Design Patterns</option>
+              <option>Microservices Architecture</option>
+              <option>Database Design</option>
+            </select>
+          </div>
+          <div class="agent-row">
+            <span class="agent-icon">🐛</span>
+            <span class="agent-label">DEBUGGER:</span>
+            <select class="retro-select">
+              <option>Error Analysis</option>
+              <option>Stack Trace Parsing</option>
+              <option>Log Intelligence</option>
+            </select>
+          </div>
+          <div class="agent-row" style="border-bottom:none;margin-bottom:4px">
+            <span class="agent-icon">🛡</span>
+            <span class="agent-label">SECURITY AUDITOR:</span>
+            <select class="retro-select">
+              <option>Vulnerability Scanning</option>
+              <option>Penetration Testing</option>
+              <option>Compliance Checks</option>
+            </select>
+          </div>
+          <div style="text-align:center; margin-top:8px;">
+            <button class="retro-btn primary">💾 SAVE AGENT CONFIG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── APP CONNECTORS ── -->
+      <div class="win-panel panel-connectors">
+        <div class="win-titlebar blue">
+          <span>🔌 APP CONNECTORS</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body">
+          <div class="connectors-grid">
+            <div class="connector-card">
+              <span class="connector-icon">📁</span>
+              <span class="connector-name">LOCAL FOLDER</span>
+              <span class="connector-tier t1">TIER 1</span>
+              <span class="connector-status connected">● CONNECTED</span>
+            </div>
+            <div class="connector-card">
+              <span class="connector-icon">🗒</span>
+              <span class="connector-name">OBSIDIAN</span>
+              <span class="connector-tier t2">TIER 2</span>
+              <span class="connector-status connected">● CONNECTED</span>
+            </div>
+            <div class="connector-card">
+              <span class="connector-icon">🐙</span>
+              <span class="connector-name">GITHUB</span>
+              <span class="connector-tier t2">TIER 2</span>
+              <span class="connector-status connected">● CONNECTED</span>
+            </div>
+            <div class="connector-card">
+              <span class="connector-icon">📋</span>
+              <span class="connector-name">NOTION</span>
+              <span class="connector-tier t2">TIER 2</span>
+              <span class="connector-status disconnected">● DISCONNECTED</span>
+            </div>
+            <div class="connector-card">
+              <span class="connector-icon">💬</span>
+              <span class="connector-name">SLACK</span>
+              <span class="connector-tier t2">TIER 2</span>
+              <span class="connector-status connected">● CONNECTED</span>
+            </div>
+            <div class="connector-add">
+              <span class="plus">＋</span>
+              <span>ADD<br>CONNECTOR</span>
+            </div>
+          </div>
+          <div style="text-align:right;margin-top:6px;">
+            <button class="retro-btn">🔑 MANAGE CREDENTIALS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ORCHESTRATION LOOP ── -->
+      <div class="win-panel panel-orch">
+        <div class="win-titlebar dark">
+          <span>⚡ ORCHESTRATION LOOP &amp; LOGS</span>
+          <button class="win-closex">✕</button>
+        </div>
+        <div class="win-body" style="display:flex;gap:8px;padding:8px;height:100%;overflow:hidden;">
+          <!-- Controls -->
+          <div style="width:148px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;">
+            <div class="pipeline-label">▣ PIPELINE CONTROL</div>
+            <button class="retro-btn success" id="start-btn" onclick="startPipeline()" style="width:100%;padding:8px 0;font-size:7px;">▶ START PIPELINE</button>
+            <button class="retro-btn" id="stop-btn" onclick="stopPipeline()" style="width:100%;padding:6px 0;font-size:7px;">■ STOP PIPELINE</button>
+            <button class="retro-btn danger" onclick="clearLogs()" style="width:100%;padding:6px 0;font-size:7px;">🗑 CLEAR LOGS</button>
+          </div>
+          <!-- Terminal -->
+          <div style="flex:1;display:flex;flex-direction:column;">
+            <div class="terminal" id="terminal">
+              <span class="t-line"><span class="t-time">[10:40:01]</span> Initializing orchestration pipeline...</span>
+              <span class="t-line"><span class="t-time">[10:40:02]</span> Loading configuration...</span>
+              <span class="t-line"><span class="t-time">[10:40:03]</span> Fetching memory units...</span>
+              <span class="t-line"><span class="t-time">[10:40:04]</span> Analyzing new data from connectors...</span>
+              <span class="t-line"><span class="t-time">[10:40:05]</span> Distilling knowledge...</span>
+              <span class="t-line"><span class="t-time">[10:40:06]</span> Checking for conflicts...</span>
+              <span class="t-line"><span class="t-time">[10:40:07]</span> Updating agent skills...</span>
+              <span class="t-line"><span class="t-time">[10:40:08]</span> Pipeline completed successfully.</span>
+              <span class="t-line"><span class="t-time">[10:40:09]</span> Waiting for next run...</span>
+              <span class="t-line"><span class="t-cursor"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panels-area -->
+  </div><!-- /os-body -->
+
+  <!-- ── TASKBAR ── -->
+  <div class="os-taskbar">
+    <button class="start-btn"><span class="win-icon">⊞</span> Start</button>
+    <div class="taskbar-sep"></div>
+    <div class="taskbar-item"><span class="t-dot"></span> CORTEX AI CONSOLE</div>
+    <div class="taskbar-clock" id="taskbar-clock">⊙ 10:42 AM</div>
+  </div>
+
+</div><!-- /os-shell -->
+
+<script>
+// ── CLOCK ────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const h12 = now.getHours() % 12 || 12;
+  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  const yr = now.getFullYear();
+  const mo = String(now.getMonth()+1).padStart(2,'0');
+  const dy = String(now.getDate()).padStart(2,'0');
+  document.getElementById('sys-time').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('sys-date').textContent = `${yr}-${mo}-${dy}`;
+  document.getElementById('taskbar-clock').textContent = `⊙ ${h12}:${String(mm).padStart(2,'0')} ${ampm}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── PRIVACY TOGGLE ───────────────────────────────────────
+document.getElementById('privacy-box').addEventListener('click', function() {
+  this.classList.toggle('checked');
+  const lbl = document.getElementById('privacy-label');
+  if (this.classList.contains('checked')) {
+    lbl.textContent = 'ENABLED'; lbl.style.color = 'var(--green)';
+  } else {
+    lbl.textContent = 'DISABLED'; lbl.style.color = 'var(--red)';
+  }
+});
+
+// ── PIPELINE SIMULATION ───────────────────────────────────
+const logLines = [
+  'Initializing orchestration pipeline...',
+  'Loading configuration...',
+  'Connecting to data sources...',
+  'Fetching memory units...',
+  'Scanning local folder connector...',
+  'Pulling GitHub commits...',
+  'Fetching Obsidian notes...',
+  'Analyzing new data from connectors...',
+  'Distilling knowledge into atomic units...',
+  'Cross-referencing memory clusters...',
+  'Checking for conflicts...',
+  '⚠ Conflict detected: MEM-0003',
+  '⚠ Conflict detected: MEM-0005',
+  'Flagging conflicts for review...',
+  'Updating agent skills...',
+  'Pushing updates to Claude AI...',
+  'Syncing knowledge base stats...',
+  'Raw chunks updated: 12,487',
+  'Active skills updated: 256',
+  'Pipeline completed successfully. ✓',
+  'Sending Slack notification...',
+  'Waiting for next run...',
+];
+let pipelineInterval = null;
+let pipelineRunning = false;
+let logIdx = 0;
+
+function getTimestamp() {
+  const now = new Date();
+  return `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}]`;
+}
+
+function appendLog(msg) {
+  const term = document.getElementById('terminal');
+  // remove cursor
+  const cursors = term.querySelectorAll('.t-cursor');
+  cursors.forEach(c => c.parentElement.remove());
+  const line = document.createElement('span');
+  line.className = 't-line';
+  const time = document.createElement('span');
+  time.className = 't-time';
+  time.textContent = getTimestamp() + ' ';
+  line.appendChild(time);
+  line.appendChild(document.createTextNode(msg));
+  term.appendChild(line);
+  // re-add cursor
+  const cursorLine = document.createElement('span');
+  cursorLine.className = 't-line';
+  const cursor = document.createElement('span');
+  cursor.className = 't-cursor';
+  cursorLine.appendChild(cursor);
+  term.appendChild(cursorLine);
+  term.scrollTop = term.scrollHeight;
+}
+
+function startPipeline() {
+  if (pipelineRunning) return;
+  pipelineRunning = true;
+  logIdx = 0;
+  clearLogs();
+  document.getElementById('start-btn').textContent = '▶ RUNNING...';
+  pipelineInterval = setInterval(() => {
+    if (logIdx < logLines.length) {
+      appendLog(logLines[logIdx++]);
+    } else {
+      stopPipeline();
+    }
+  }, 500);
+}
+
+function stopPipeline() {
+  clearInterval(pipelineInterval);
+  pipelineRunning = false;
+  document.getElementById('start-btn').textContent = '▶ START PIPELINE';
+  if (logIdx > 0 && logIdx < logLines.length) appendLog('Pipeline stopped by user.');
+}
+
+function clearLogs() {
+  const term = document.getElementById('terminal');
+  term.innerHTML = '<span class="t-line"><span class="t-cursor"></span></span>';
+}
+
+function refreshStatus() {
+  const dots = document.querySelectorAll('.dot.green');
+  dots.forEach(d => { d.style.boxShadow = '0 0 12px var(--green2)'; setTimeout(() => d.style.boxShadow = '', 800); });
+}
+
+// ── MENU ITEMS ───────────────────────────────────────────
+document.querySelectorAll('.menu-item').forEach(item => {
+  item.addEventListener('click', function() {
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ── CONNECTOR CARDS ──────────────────────────────────────
+document.querySelectorAll('.connector-card').forEach(card => {
+  card.addEventListener('click', function() {
+    this.style.background = '#d4c8b0';
+    setTimeout(() => this.style.background = '', 200);
+  });
+});
+
+// ── STAT COUNTER ANIMATION ────────────────────────────────
+function animateCounter(el, target, duration) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const formatted = target.toLocaleString();
+  const timer = setInterval(() => {
+    start = Math.min(start + step, target);
+    el.textContent = Math.floor(start).toLocaleString();
+    if (start >= target) { el.textContent = formatted; clearInterval(timer); }
+  }, 16);
+}
+setTimeout(() => {
+  animateCounter(document.getElementById('raw-chunks'), 12487, 1200);
+  animateCounter(document.getElementById('active-skills'), 256, 800);
+}, 400);
+</script>
+</body>
+</html>

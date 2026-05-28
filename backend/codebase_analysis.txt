@@ -1,0 +1,804 @@
+## src/api.py (1603 lines)
+Module Docstring: Organizational Intelligence Engine — Unified API Server...
+  - Class: ConfigModel
+  - Function: get_config
+  - Function: update_config
+  - Function: get_status
+  - Function: get_db_stats
+  - Function: get_skills
+  - Function: get_chunks
+  - Function: get_atomic_units
+  - Function: get_conflicts
+  - Function: approve_unit
+  - Function: reject_unit
+  - Class: AgentAssignModel
+  - Function: assign_agent
+  - Class: ConnectRequest
+  - Function: list_connectors
+  - Function: connect_app
+  - Function: disconnect_app
+  - Function: test_connector
+  - Function: execute_pipeline
+  - Function: run_pipeline
+  - Function: get_logs
+  - Class: WebhookPayload
+  - Function: handle_webhook_ingestion
+  - Class: AgentFeedbackRequest
+  - Function: receive_agent_feedback
+  - Class: DynamicAssemblyRequest
+  - Function: dynamic_runtime_assembly
+  - Class: NotionConnectRequest
+  - Function: _get_notion_token
+  - Function: _save_notion_token
+  - Function: get_providers_status
+  - Class: OAuthConnectRequest
+  - Function: get_oauth_app_config
+  - Function: get_oauth_status
+  - Function: oauth_disconnect
+  - Function: list_connector_resources
+  - Function: get_pointers
+  - Function: get_pointer_stats
+  - Class: SyncRunRequest
+  - Function: get_cache_stats
+  - Function: route_debug
+  - Function: semantic_search
+  - Function: rebuild_search_index
+  - Function: get_search_stats
+  - Class: ACLRuleRequest
+  - Function: set_acl_rule
+  - Function: check_acl
+  - Function: get_acl_stats
+  - Function: get_audit_log
+  - Function: get_rate_limit_status
+  - Function: serve_frontend
+
+## src/api/server.py (223 lines)
+  - Class: SlackIngestRequest
+  - Class: AgentFeedbackRequest
+  - Class: DynamicAssemblyRequest
+  - Function: run_pipeline_for_messages
+  - Class: NotionIngestRequest
+  - Function: run_pipeline_for_document
+
+## src/core/acl.py (333 lines)
+Module Docstring: Phase 4 — ACL Inheritance Layer...
+  - Class: ACLRule
+  - Class: ACLCheckResult
+  - Class: ACLStore
+    - Method: __init__
+    - Method: _connect
+    - Method: _migrate
+    - Method: set_rule
+    - Method: inherit_from_source
+    - Method: check
+    - Method: get_rules
+    - Method: filter_allowed_ids
+    - Method: get_stats
+    - Method: _row_to_rule
+
+## src/core/credential_store.py (253 lines)
+Module Docstring: Credential Store — Secure credential management for app connectors....
+  - Class: CredentialStore
+    - Method: __init__
+    - Method: _ensure_state
+    - Method: save_credentials
+    - Method: get_credentials
+    - Method: delete_credentials
+    - Method: has_credentials
+    - Method: mask_credentials
+    - Method: _keyring_save
+    - Method: _keyring_get
+    - Method: _legacy_save
+    - Method: _legacy_get
+    - Method: _legacy_delete
+    - Method: _legacy_load_raw
+    - Method: _ensure_legacy_file
+    - Method: _fields_path
+    - Method: _save_field_names
+    - Method: _get_field_names
+    - Method: _delete_field_names
+    - Method: _migrate_legacy_to_keyring
+    - Method: _encode
+    - Method: _decode
+
+## src/core/models.py (323 lines)
+Module Docstring: Core data models for the 10-Layer Organizational Intelligence Engine....
+  - Class: ProcessingLayer
+  - Class: KnowledgeType
+  - Class: SourceType
+  - Class: Department
+  - Class: SensitivityLevel
+  - Class: PrivacyMode
+  - Class: UnitStatus
+  - Class: MemoryTier
+  - Class: SourcePosition
+  - Class: KnowledgeMetadata
+  - Class: AtomicKnowledgeUnit
+  - Class: SourceRef
+  - Class: AuditEntry
+  - Class: KnowledgeChunk
+  - Class: SkillMetadata
+  - Class: SkillDef
+  - Class: PipelineRunStats
+
+## src/core/search.py (406 lines)
+Module Docstring: Phase 4 — Semantic Search Engine...
+  - Function: _get_embed_model
+  - Function: _embed
+  - Function: _cosine
+  - Function: _vec_to_blob
+  - Function: _blob_to_vec
+  - Function: _bm25_score
+  - Class: SearchResult
+  - Class: VectorStore
+    - Method: __init__
+    - Method: _connect
+    - Method: _migrate
+    - Method: index_chunk
+    - Method: search
+    - Method: count
+    - Method: get_stats
+    - Method: index_from_store
+
+## src/filters/__init__.py (310 lines)
+Module Docstring: Declarative Filter DSL — Models and Engine....
+  - Class: FilterRule
+  - Class: FilterRecipe
+  - Class: FilterResult
+  - Class: FilterEngine
+    - Method: apply_to_units
+    - Method: apply_to_chunks
+    - Method: dry_run
+    - Method: _matches
+    - Method: _evaluate_rule
+    - Method: _get_field_value
+    - Method: _compare
+    - Method: _str_contains
+    - Method: _str_equals
+    - Method: _regex_match
+  - Class: FilterRegistry
+    - Method: __init__
+    - Method: save
+    - Method: get
+    - Method: list_all
+    - Method: delete
+    - Method: _load_all
+    - Method: _save_all
+
+## src/generators/skill_generator.py (81 lines)
+  - Class: SkillGenerator
+    - Method: __init__
+    - Method: generate_skill_md
+    - Method: save_skill
+
+## src/ingestion/connector_manager.py (877 lines)
+Module Docstring: Connector Manager — Central brain for all app integrations....
+  - Class: ConnectorManager
+    - Method: __init__
+    - Method: _ensure_state_file
+    - Method: _load_state
+    - Method: _save_state
+    - Method: _load_mcp_config
+    - Method: _save_mcp_config
+    - Method: _get_mcp_connector
+    - Method: get_all_connectors
+    - Method: connect
+    - Method: disconnect
+    - Method: test_connection
+    - Method: ingest_all_connected
+    - Method: get_connected_data_paths
+    - Method: _connect_tier1
+    - Method: _connect_tier2
+    - Method: _validate_credentials
+    - Method: _dispatch_ingestion
+    - Method: _dispatch_via_mcp
+    - Method: _detect_obsidian_vault
+    - Method: _check_gh_cli
+
+## src/ingestion/connectors/__init__.py (11 lines)
+Module Docstring: Cortex Connector Collection — Phase 1...
+
+## src/ingestion/connectors/base.py (170 lines)
+Module Docstring: BaseConnector — Abstract interface all Cortex connectors must implement....
+  - Class: ConnectResult
+  - Class: Resource
+  - Class: RawDocument
+    - Method: build
+  - Class: BaseConnector
+    - Method: __init__
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: last_sync_cursor
+    - Method: last_sync_cursor
+    - Method: now_iso
+    - Method: hash_content
+    - Method: __repr__
+
+## src/ingestion/connectors/confluence_connector.py (217 lines)
+Module Docstring: Confluence Connector — Cortex Phase 1...
+  - Class: ConfluenceConnector
+    - Method: __init__
+    - Method: _api_base
+    - Method: _headers
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _page_to_document
+    - Method: _strip_html
+    - Method: set_spaces
+
+## src/ingestion/connectors/github_connector.py (200 lines)
+Module Docstring: GitHub Connector — Cortex Phase 1...
+  - Class: GitHubConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: _get
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _fetch_repo
+    - Method: _issue_to_document
+    - Method: set_repos
+
+## src/ingestion/connectors/google_drive_connector.py (236 lines)
+Module Docstring: Google Drive Connector — Cortex Phase 1...
+  - Class: GoogleDriveConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _fetch_file
+    - Method: set_folders
+
+## src/ingestion/connectors/jira_connector.py (240 lines)
+Module Docstring: Jira Connector — Cortex Phase 1...
+  - Class: JiraConnector
+    - Method: __init__
+    - Method: _api_base
+    - Method: _headers
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _issue_to_document
+    - Method: _extract_adf_text
+    - Method: set_projects
+
+## src/ingestion/connectors/linear_connector.py (194 lines)
+Module Docstring: Linear Connector — Cortex Phase 1...
+  - Class: LinearConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: _query
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _issue_to_document
+    - Method: set_teams
+  - Function: json_list
+
+## src/ingestion/connectors/ms_teams_connector.py (190 lines)
+Module Docstring: MS Teams Connector — Cortex Phase 1...
+  - Class: MSTeamsConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: _get
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _fetch_channel_messages
+    - Method: _message_to_document
+    - Method: set_channels
+
+## src/ingestion/connectors/notion_connector.py (279 lines)
+Module Docstring: Notion OAuth Connector — Cortex Phase 1...
+  - Class: NotionConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: search_workspace
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: fetch_page
+    - Method: _search_since
+    - Method: _fetch_page_as_document
+    - Method: _fetch_blocks
+    - Method: _block_to_text
+    - Method: _extract_title
+    - Method: _add_dashes
+    - Method: set_pages
+
+## src/ingestion/connectors/slack_connector.py (192 lines)
+Module Docstring: Slack OAuth Connector — Cortex Phase 1...
+  - Class: SlackConnector
+    - Method: __init__
+    - Method: _get_client
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: _fetch_channel
+    - Method: set_channels
+
+## src/ingestion/connectors/whatsapp_connector.py (196 lines)
+Module Docstring: WhatsApp Business Connector — Cortex Phase 1...
+  - Class: WhatsAppConnector
+    - Method: __init__
+    - Method: _headers
+    - Method: connect
+    - Method: test_connection
+    - Method: list_resources
+    - Method: fetch_delta
+    - Method: get_permalink
+    - Method: verify_webhook_signature
+    - Method: process_webhook_payload
+    - Method: _message_to_document
+
+## src/ingestion/github_connector.py (190 lines)
+Module Docstring: GitHub Connector — Tier 1 (Zero-Setup)...
+  - Class: GitHubConnector
+    - Method: __init__
+    - Method: is_authenticated
+    - Method: get_auth_user
+    - Method: list_repos
+    - Method: fetch_repo_readme
+    - Method: fetch_recent_issues
+    - Method: ingest
+
+## src/ingestion/mcp_client.py (266 lines)
+Module Docstring: MCP Client for bhram--H pipeline....
+  - Class: MCPConnector
+    - Method: __init__
+    - Method: from_config
+    - Method: call_tool_sync
+  - Function: ingest_via_mcp_notion
+  - Function: ingest_via_mcp_slack
+  - Function: ingest_via_mcp_github
+  - Function: ingest_via_mcp_linear
+
+## src/ingestion/notion_connector.py (392 lines)
+Module Docstring: Real Notion Connector...
+  - Class: NotionAPIError
+  - Class: _NotionClient
+    - Method: __init__
+    - Method: _get
+    - Method: _post
+    - Method: search_all
+    - Method: get_blocks
+    - Method: get_database_rows
+    - Method: get_page
+    - Method: whoami
+  - Function: _rich_text_to_str
+  - Function: _block_to_text
+  - Function: _extract_page_title
+  - Function: _extract_prop_value
+  - Class: NotionConnector
+    - Method: __init__
+    - Method: is_connected
+    - Method: test_connection
+    - Method: fetch_page_content
+    - Method: fetch_database_content
+    - Method: fetch_workspace
+    - Method: fetch_delta
+    - Method: fetch_page
+
+## src/ingestion/oauth_manager.py (498 lines)
+Module Docstring: OAuth Manager — RFC 9700 PKCE + localhost callback pattern....
+  - Class: TokenSet
+    - Method: is_expired
+    - Method: to_json
+    - Method: from_json
+  - Class: OAuthResult
+  - Function: _generate_pkce_pair
+  - Class: _CallbackHandler
+    - Method: do_GET
+    - Method: log_message
+  - Class: OAuthManager
+    - Method: __init__
+    - Method: start_flow
+    - Method: get_valid_token
+    - Method: revoke
+    - Method: is_connected
+    - Method: _exchange_code
+    - Method: _refresh_token
+    - Method: _save_token_set
+    - Method: _load_token_set
+    - Method: _delete_token_set
+    - Method: _load_all_file_tokens
+
+## src/ingestion/parsers.py (223 lines)
+Module Docstring: Layer 1: LOCAL FILE INGESTION...
+  - Class: LocalFileParser
+    - Method: __init__
+    - Method: parse_json
+    - Method: parse_markdown
+    - Method: parse_text
+    - Method: ingest_directory
+
+## src/ingestion/slack_connector.py (53 lines)
+  - Class: SlackConnector
+    - Method: __init__
+    - Method: fetch_channel_history
+
+## src/ingestion/sync_manager.py (194 lines)
+Module Docstring: Phase 3 — SyncManager: Delta Sync Orchestrator...
+  - Class: SyncResult
+  - Class: SyncManager
+    - Method: __init__
+    - Method: run_sync
+    - Method: get_dashboard
+
+## src/ingestion/webhook_server.py (585 lines)
+Module Docstring: Phase 4 — Webhook Server...
+  - Function: _verify_slack
+  - Function: _verify_sha256
+  - Function: _ingest_text
+  - Function: _db_path
+  - Function: _audit
+  - Function: webhook_health
+
+## src/main.py (725 lines)
+Module Docstring: BHRM Organizational Intelligence Engine — 10-Layer Orchestrator...
+  - Function: run_orchestration_loop
+  - Function: _determine_agent
+  - Function: _get_source_privacy
+  - Function: _decompose_to_atomic_units
+  - Function: _split_into_claims
+  - Function: _to_imperative
+  - Function: _text_similarity
+
+## src/mcp_server.py (588 lines)
+Module Docstring: BHRM Organizational Intelligence — MCP Server...
+  - Function: search_knowledge
+  - Function: get_department_rules
+  - Function: get_skill
+  - Function: list_skills
+  - Function: list_departments
+  - Function: report_failure
+  - Function: run_pipeline
+  - Function: get_pipeline_status
+  - Function: get_agent_bindings
+  - Function: read_skill_resource
+  - Function: read_department_chunks
+  - Function: department_briefing
+  - Function: task_context
+
+## src/memory/__init__.py (261 lines)
+Module Docstring: Memory Manager — Unified interface to the 7-tier memory architecture....
+  - Class: MemoryManager
+    - Method: __init__
+    - Method: save_working_unit
+    - Method: get_working_units
+    - Method: flush_working_memory
+    - Method: record_source
+    - Method: get_source
+    - Method: get_all_sources
+    - Method: promote_to_canonical
+    - Method: get_canonical_units
+    - Method: supersede_unit
+    - Method: record_failure
+    - Method: get_active_failures
+    - Method: get_skills_for_department
+    - Method: log_decision
+    - Method: get_audit_trail
+    - Method: get_stats
+
+## src/middleware/__init__.py (206 lines)
+Module Docstring: Phase 4 — Rate Limiting Middleware...
+  - Function: _get_rule
+  - Class: _SlidingWindow
+    - Method: __init__
+    - Method: check_and_increment
+  - Class: RateLimiter
+    - Method: _get_client_ip
+  - Class: ConnectorRateLimiter
+    - Method: __init__
+    - Method: allow
+    - Method: status
+
+## src/pipeline/__init__.py (1 lines)
+
+## src/pipeline/chunking.py (303 lines)
+Module Docstring: Layer 3: CHUNKING...
+  - Class: RawChunk
+    - Method: __post_init__
+  - Class: SemanticChunker
+    - Method: __init__
+    - Method: chunk_document
+    - Method: chunk_slack_messages
+    - Method: _split_with_metadata
+    - Method: _recursive_split
+    - Method: _add_overlap
+
+## src/pipeline/deduplicate.py (272 lines)
+Module Docstring: Layer 5: DEDUPLICATION...
+  - Class: DeduplicationDecision
+  - Class: KnowledgeDeduplicator
+    - Method: __init__
+    - Method: evaluate_chunk
+    - Method: evaluate_batch
+    - Method: _find_similar_candidates
+    - Method: _compute_similarity
+    - Method: _ai_evaluate
+    - Method: _heuristic_evaluate
+
+## src/pipeline/distill.py (587 lines)
+Module Docstring: Layer 4: DISTILLATION...
+  - Class: DistilledSignal
+  - Class: DistillationBatch
+  - Class: KnowledgeDistiller
+    - Method: __init__
+    - Method: distill_chunks
+    - Method: distill_text
+    - Method: _process_batch
+    - Method: refine_chunks
+    - Method: _ai_distill_batch
+    - Method: _signals_to_chunks
+    - Method: _pick_provider
+    - Method: cache_stats
+    - Method: _mock_distill_batch
+    - Method: _extract_signals_from_text
+    - Method: _classify_department
+    - Method: _classify_type
+    - Method: _score_confidence
+    - Method: _generate_title
+    - Method: _extract_tags
+
+## src/pipeline/normalize.py (166 lines)
+Module Docstring: Layer 2: NORMALIZATION...
+  - Class: TextNormalizer
+    - Method: clean_html
+    - Method: clean_slack_artifacts
+    - Method: remove_conversational_noise
+    - Method: clean_markdown
+    - Method: normalize_whitespace
+    - Method: normalize_document
+    - Method: normalize_slack_messages
+
+## src/pipeline/privacy_scanner.py (173 lines)
+Module Docstring: Privacy Scanner — Layer 7 of the 10-layer pipeline....
+  - Class: PIIMatch
+  - Class: ScanResult
+    - Method: has_pii
+    - Method: categories_found
+    - Method: to_dict
+  - Class: PrivacyScanner
+    - Method: scan
+    - Method: scan_batch
+    - Method: _redact
+    - Method: get_redaction_map
+
+## src/providers/__init__.py (95 lines)
+Module Docstring: AI Provider Protocol and shared types....
+  - Class: ProviderName
+  - Class: AIRequest
+  - Class: AIResponse
+  - Class: EmbedResponse
+  - Class: RoutingDecision
+  - Class: AIProvider
+    - Method: name
+    - Method: is_online
+    - Method: is_available
+    - Method: supports_structured_output
+    - Method: max_context_tokens
+    - Method: estimate_cost
+
+## src/providers/claude_adapter.py (142 lines)
+Module Docstring: Claude Provider Adapter....
+  - Class: ClaudeAdapter
+    - Method: __init__
+    - Method: name
+    - Method: is_online
+    - Method: is_available
+    - Method: supports_structured_output
+    - Method: max_context_tokens
+    - Method: estimate_cost
+
+## src/providers/hash_cache.py (206 lines)
+Module Docstring: Phase 3 — Hash Cache: In-Process LRU + SQLite Persistence...
+  - Class: HashCache
+    - Method: __init__
+    - Method: _connect
+    - Method: _migrate
+    - Method: make_key
+    - Method: get
+    - Method: set
+    - Method: invalidate
+    - Method: stats
+    - Method: _evict_if_needed
+
+## src/providers/model_router.py (167 lines)
+Module Docstring: Phase 3 — Model Router: Cheapest Model for Every Task...
+  - Class: TaskType
+  - Class: ProviderChoice
+  - Function: route
+  - Function: describe_routing
+  - Function: _estimate_cost
+
+## src/providers/ollama_adapter.py (174 lines)
+Module Docstring: Ollama Provider Adapter....
+  - Class: OllamaAdapter
+    - Method: __init__
+    - Method: name
+    - Method: is_online
+    - Method: is_available
+    - Method: supports_structured_output
+    - Method: max_context_tokens
+    - Method: estimate_cost
+
+## src/providers/openai_adapter.py (140 lines)
+Module Docstring: OpenAI Provider Adapter....
+  - Class: OpenAIAdapter
+    - Method: __init__
+    - Method: name
+    - Method: is_online
+    - Method: is_available
+    - Method: supports_structured_output
+    - Method: max_context_tokens
+    - Method: estimate_cost
+
+## src/providers/router.py (248 lines)
+Module Docstring: AI Provider Router — The central routing engine....
+  - Class: ProviderRouter
+    - Method: __init__
+    - Method: get_available_providers
+    - Method: get_recent_decisions
+    - Method: clear_decisions
+    - Method: _build_fallback_chain
+
+## src/providers/rule_based.py (78 lines)
+Module Docstring: Rule-Based Provider Adapter....
+  - Class: RuleBasedAdapter
+    - Method: name
+    - Method: is_online
+    - Method: is_available
+    - Method: supports_structured_output
+    - Method: max_context_tokens
+    - Method: estimate_cost
+
+## src/smart_layer/agent_connector.py (83 lines)
+  - Class: AgentConnector
+    - Method: __init__
+    - Method: get_agent_skills
+    - Method: bind_skill_to_agent
+    - Method: remove_skill_from_agent
+    - Method: trigger_agent_reload
+
+## src/smart_layer/assembler.py (212 lines)
+Module Docstring: Layer 6: SYNTHESIS — Skill Assembly...
+  - Class: SynthesizedSkill
+  - Class: SkillAssembler
+    - Method: __init__
+    - Method: assemble_skill
+    - Method: _ai_assemble
+    - Method: _rule_based_assemble
+
+## src/smart_layer/classifier.py (145 lines)
+Module Docstring: Smart Layer: LLM Classifier...
+  - Class: ClassificationResult
+  - Class: LLMClassifier
+    - Method: __init__
+    - Method: classify_chunk
+    - Method: _mock_classify
+
+## src/smart_layer/tool_provisioner.py (112 lines)
+  - Class: ToolRequirement
+  - Class: ToolProvisioner
+    - Method: __init__
+    - Method: determine_tools
+    - Method: _mock_determine
+    - Method: provision_skill
+
+## src/smart_layer/validators.py (191 lines)
+Module Docstring: Skill Validators — Multi-gate validation for skill generation....
+  - Class: ValidatorResult
+    - Method: __init__
+    - Method: to_dict
+  - Class: SkillValidationReport
+    - Method: __init__
+    - Method: all_passed
+    - Method: failures
+    - Method: add
+    - Method: to_dict
+  - Class: SkillValidator
+    - Method: __init__
+    - Method: validate
+    - Method: _check_schema
+    - Method: _check_source_coverage
+    - Method: _check_conflicts
+    - Method: _check_duplicate_steps
+    - Method: _check_completeness
+
+## src/storage/__init__.py (1 lines)
+
+## src/storage/filesystem_store.py (62 lines)
+Module Docstring: Storage Layer: Filesystem Store...
+  - Class: FilesystemStore
+    - Method: __init__
+    - Method: _load_all
+    - Method: _save_all
+    - Method: save_chunk
+    - Method: get_all_by_department
+    - Method: get_all
+    - Method: delete_chunk
+
+## src/storage/migrate_json_to_sqlite.py (88 lines)
+Module Docstring: One-time migration: Import existing chunks.json into SQLite....
+  - Function: migrate
+
+## src/storage/pointer_store.py (332 lines)
+Module Docstring: Phase 2 — Pointer-Based Memory...
+  - Class: PointerRecord
+    - Method: is_stale
+    - Method: hash_content
+  - Class: SyncState
+  - Class: PointerStore
+    - Method: __init__
+    - Method: _connect
+    - Method: _migrate
+    - Method: upsert
+    - Method: mark_indexed
+    - Method: get
+    - Method: get_stale_keys
+    - Method: delete
+    - Method: count
+    - Method: list_by_app
+    - Method: get_stats
+    - Method: load_sync_state
+    - Method: save_sync_state
+    - Method: get_all_sync_states
+    - Method: _row_to_record
+
+## src/storage/skill_registry.py (42 lines)
+  - Class: SkillRegistry
+    - Method: __init__
+    - Method: register_skill
+    - Method: get_chunks_for_skill
+    - Method: get_skills_affected_by_chunk
+    - Method: list_all_skills
+
+## src/storage/sqlite_store.py (570 lines)
+Module Docstring: Storage Layer: SQLite Store...
+  - Class: SQLiteStore
+    - Method: __init__
+    - Method: _connect
+    - Method: _init_db
+    - Method: save_chunk
+    - Method: get_all
+    - Method: get_all_by_department
+    - Method: get_chunk_by_id
+    - Method: delete_chunk
+    - Method: count_chunks
+    - Method: _row_to_chunk
+    - Method: save_unit
+    - Method: get_units_by_department
+    - Method: get_unit_by_id
+    - Method: get_approved_units_for_skill
+    - Method: get_conflicting_units
+    - Method: count_units
+    - Method: _row_to_unit
+    - Method: save_source_ref
+    - Method: get_source_ref
+    - Method: log_audit
+    - Method: get_audit_trail
+    - Method: save_failure
+    - Method: get_unresolved_failures
+

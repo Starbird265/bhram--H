@@ -28,7 +28,7 @@ class TextNormalizer:
         r"(?i)^[-•*]?\s*(brb|gtg|afk|bbl|ttyl)\b.*$",
         r"(?i)^[-•*]?\s*(grabbing|getting|going for)\s+(lunch|coffee|food|break).*$",
         r"(?i)^[-•*]?\s*\+1\s*$",
-        r"(?i)^[-•*]?\s*(ok|okay|sure|got it|sounds good|will do|done|noted)\s*\.?\s*$",
+        r"(?i)^[-•*]?\s*(ok|okay|sure|got it|sounds good|ok sounds good|will do|done|noted)\s*\.?\s*$",
         r"(?i)^[-•*]?\s*(who wants|anyone want|let me know if|whoever is)\s+(lunch|coffee|food|grabbing|getting).*$",
         r"(?i)^[-•*]?\s*(also,?\s*)?(whoever|anyone).*\b(lunch|coffee|food|break)\b.*$",
         r"(?i)^[-•*]?\s*happy (birthday|friday|monday|weekend).*$",
@@ -112,13 +112,13 @@ class TextNormalizer:
     @staticmethod
     def clean_markdown(raw_md: str) -> str:
         """Removes excessive markdown artifacts for cleaner distillation."""
+        # Remove image references FIRST (before link simplifier strips [...](url))
+        text = re.sub(r'!\[.*?\]\(.*?\)', '', raw_md)
         # Remove bold/italic markers
-        text = re.sub(r'\*\*(.*?)\*\*', r'\1', raw_md)
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
         text = re.sub(r'\*(.*?)\*', r'\1', text)
-        # Simplify links to just text
+        # Simplify links to just anchor text
         text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
-        # Remove image references
-        text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
         return text.strip()
 
     @staticmethod
