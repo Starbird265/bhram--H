@@ -11,6 +11,7 @@ Manages:
 import os
 import json
 import glob
+import logging
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 from datetime import datetime, timezone
@@ -145,6 +146,14 @@ CONNECTOR_REGISTRY = {
 }
 
 
+
+# Dedicated Connection Log
+conn_logger = logging.getLogger("ConnectionLog")
+if not conn_logger.handlers:
+    conn_handler = logging.FileHandler("connection.log")
+    conn_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    conn_logger.addHandler(conn_handler)
+    conn_logger.setLevel(logging.INFO)
 
 class ConnectorManager:
     """
@@ -439,6 +448,7 @@ class ConnectorManager:
                 "status_message": f"Connected to {path}",
             }
             self._save_state(state)
+            conn_logger.info(f"Connected to local folder: {path}")
             return {"status": "connected", "message": f"Connected to folder: {path}"}
 
         elif app_id == "obsidian":
@@ -457,6 +467,7 @@ class ConnectorManager:
                 "status_message": f"Vault: {vault_path}",
             }
             self._save_state(state)
+            conn_logger.info(f"Connected to Obsidian vault: {vault_path}")
             return {"status": "connected", "message": f"Connected to Obsidian vault: {vault_path}"}
 
         elif app_id == "github":
@@ -472,6 +483,7 @@ class ConnectorManager:
                 "status_message": f"Authenticated as {user}",
             }
             self._save_state(state)
+            conn_logger.info(f"Connected to GitHub as {user} via CLI")
             return {"status": "connected", "message": f"Connected to GitHub as {user}"}
 
         return {"status": "error", "message": f"Unknown tier 1 connector: {app_id}"}
@@ -552,6 +564,7 @@ class ConnectorManager:
         self._save_state(state)
 
         name = CONNECTOR_REGISTRY[app_id]["name"]
+        conn_logger.info(f"Connected to {name} ({app_id}): {message}")
         return {"status": "connected", "message": f"{name} connected. {message}"}
 
 

@@ -46,6 +46,15 @@ from core.search import VectorStore
 # Phase 5: External Agent Connectivity
 from middleware.webhook_security import build_authenticated_headers, verify_signature
 from agents.webhook_dispatcher import WebhookDispatcher
+import logging
+
+# Dedicated Connection Log
+conn_logger = logging.getLogger("ConnectionLog")
+if not conn_logger.handlers:
+    conn_handler = logging.FileHandler("connection.log")
+    conn_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    conn_logger.addHandler(conn_handler)
+    conn_logger.setLevel(logging.INFO)
 
 # Global webhook dispatcher instance (started in lifespan)
 _webhook_dispatcher: Optional[WebhookDispatcher] = None
@@ -122,6 +131,7 @@ async def _lifespan(app: FastAPI):
     _webhook_dispatcher = WebhookDispatcher(max_retries=5, base_delay=1.0)
     _webhook_dispatcher.start()
     print("  [Startup] WebhookDispatcher started ✓")
+    conn_logger.info("WebhookDispatcher started during API startup")
 
     # 6.5. Run expiry sweep (clean stale session facts + expired units)
     try:
@@ -1083,6 +1093,7 @@ def register_external_agent(data: ExternalAgentRegistration):
         context_ready=True,                       # External agents manage own context
     )
     reg.register(profile)
+    conn_logger.info(f"External agent registered: {data.agent_id} ({data.display_name}) at {data.url}")
 
     # Also make orchestrator aware it can delegate to this agent
     orchestrator = reg.get("orchestrator")
@@ -1149,6 +1160,7 @@ def submit_task_to_agent(agent_id: str, task: TaskSubmission):
 
     # If agent has a webhook (external agent), forward via dispatcher
     if target.webhook_url:
+        conn_logger.info(f"Dispatching task {task_id} to external agent {agent_id} at {target.webhook_url}")
         webhook_payload = {
             "task_id": task_id,
             "task_type": task.task_type,
@@ -1271,6 +1283,7 @@ def receive_task_result(task_id: str, payload: TaskResultPayload):
     reg = AgentRegistry(db_path=os.path.join(base_dir, "database"))
 
     # Store the result
+    conn_logger.info(f"Received result for task {task_id} from agent {payload.agent_id} (status: {payload.status})")
     reg.save_task_result(
         task_id=task_id,
         agent_id=payload.agent_id,
@@ -1772,8 +1785,10 @@ async def notion_connect(req: NotionConnectRequest):
     connector = NotionConnector(token=req.token.strip())
     result = connector.test_connection()
     if not result["ok"]:
+        conn_logger.error(f"Notion connection failed: {result['error']}")
         raise HTTPException(status_code=400, detail=result["error"])
     _save_notion_token(req.token.strip())
+    conn_logger.info(f"Notion connected successfully for workspace: {result.get('workspace_name')}")
     return {
         "connected": True,
         "user": result.get("user"),
