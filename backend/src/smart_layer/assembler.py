@@ -125,11 +125,16 @@ class SkillAssembler:
             temperature=0.3,
         )
 
-        loop = asyncio.new_event_loop()
         try:
-            response = loop.run_until_complete(self.router.complete(request))
-        finally:
-            loop.close()
+            response = asyncio.run(self.router.complete(request))
+        except RuntimeError:
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+                loop = asyncio.get_event_loop()
+                response = loop.run_until_complete(self.router.complete(request))
+            except ImportError:
+                return self._rule_based_assemble(skill_name, description, chunks, department)
 
         if response.error:
             print(f"[Layer 6] AI synthesis error: {response.error}. Falling back to rule-based.")

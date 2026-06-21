@@ -1,8 +1,17 @@
 import json
 import os
+import logging
 import requests
 from pathlib import Path
 from typing import List, Dict
+
+# Dedicated Connection Log
+conn_logger = logging.getLogger("ConnectionLog")
+if not conn_logger.handlers:
+    conn_handler = logging.FileHandler("connection.log")
+    conn_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    conn_logger.addHandler(conn_handler)
+    conn_logger.setLevel(logging.INFO)
 
 class AgentConnector:
     """
@@ -65,8 +74,7 @@ class AgentConnector:
         Uses HMAC-signed headers for authenticated delivery.
         """
         skills = self.get_agent_skills(agent_name)
-        print(f"[AgentConnector] Triggering hot-reload for agent '{agent_name}'.")
-        print(f"[AgentConnector] Agent '{agent_name}' is now armed with skills: {skills}")
+        conn_logger.info(f"Triggering hot-reload for agent '{agent_name}' with skills: {skills}")
         
         webhook_url = os.getenv(f"AGENT_WEBHOOK_{agent_name.upper()}")
         if webhook_url:
@@ -75,15 +83,15 @@ class AgentConnector:
                 payload = {"agent": agent_name, "active_skills": skills, "event": "skill_reload"}
                 headers = build_authenticated_headers(payload=payload)
 
-                print(f"[AgentConnector] Sending signed payload to {webhook_url}...")
+                conn_logger.info(f"Sending signed reload payload to {webhook_url}...")
                 response = requests.post(
                     webhook_url, json=payload, headers=headers, timeout=5
                 )
                 if response.status_code == 200:
-                    print(f"[AgentConnector] Agent '{agent_name}' successfully reloaded.")
+                    conn_logger.info(f"Agent '{agent_name}' successfully reloaded.")
                 else:
-                    print(f"[AgentConnector] Failed to reload agent '{agent_name}'. Status: {response.status_code}")
+                    conn_logger.warning(f"Failed to reload agent '{agent_name}'. Status: {response.status_code}")
             except Exception as e:
-                print(f"[AgentConnector] Webhook error for agent '{agent_name}': {e}")
+                conn_logger.error(f"Webhook error for agent '{agent_name}': {e}")
         else:
-            print(f"[AgentConnector] No webhook configured for agent '{agent_name}'. Skipping live reload.")
+            conn_logger.info(f"No webhook configured for agent '{agent_name}'. Skipping live reload.")

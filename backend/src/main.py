@@ -179,6 +179,10 @@ def run_orchestration_loop(
         logger.info("  [Memory] Expiry sweep: nothing to clean")
 
     router = ProviderRouter()
+    # Phase 3: Hash cache
+    from providers.hash_cache import HashCache
+    cache = HashCache(db_path=db_path)
+
     scanner = PrivacyScanner()
     validator = SkillValidator(min_units=2, min_coverage=0.4)
 
@@ -344,7 +348,7 @@ def run_orchestration_loop(
         logger.info("│  LAYER 4: DISTILLATION                  │")
         logger.info("└─────────────────────────────────────────┘")
 
-        distiller = KnowledgeDistiller()
+        distiller = KnowledgeDistiller(router=router, cache=cache, db_path=db_path)
         distilled_chunks = distiller.distill_chunks(all_chunks)
         stats.chunks_after_distillation = len(distilled_chunks)
         stats.noise_filtered = max(0, len(all_chunks) - len(distilled_chunks))
@@ -358,7 +362,7 @@ def run_orchestration_loop(
         logger.info("│  LAYER 5: DEDUPLICATION                 │")
         logger.info("└─────────────────────────────────────────┘")
 
-        deduplicator = KnowledgeDeduplicator()
+        deduplicator = KnowledgeDeduplicator(router=router, cache=cache, db_path=db_path)
         existing_chunks = store.get_all()
         results = deduplicator.evaluate_batch(distilled_chunks, existing_chunks)
 
@@ -495,7 +499,10 @@ def run_orchestration_loop(
 
             skill_name = f"{dept.value}-operational-knowledge"
             assembled_skill = assembler.assemble_skill(skill_name, f"Knowledge for {dept.value}", dept_chunks, dept)
+
+            provisioner = ToolProvisioner(router=router, cache=cache, db_path=db_path)
             provisioned_skill = provisioner.provision_skill(assembled_skill)
+
             generator.save_skill(provisioned_skill, dept)
             generator.save_context(provisioned_skill, dept)
             registry.register_skill(skill_name, [c.id for c in dept_chunks])

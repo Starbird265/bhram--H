@@ -1519,16 +1519,21 @@ def handle_webhook_ingestion(payload: WebhookPayload):
         return {"status": "success", "message": "Content processed. No actionable signals found."}
 
     # Layer 4: Distill
-    distiller = KnowledgeDistiller()
+    db_path = os.path.join(base_dir, "database")
+    from providers.router import ProviderRouter
+    from providers.hash_cache import HashCache
+    router = ProviderRouter()
+    cache = HashCache(db_path=db_path)
+
+    distiller = KnowledgeDistiller(router=router, cache=cache, db_path=db_path)
     distilled = distiller.distill_chunks(chunks)
 
     if not distilled:
         return {"status": "success", "message": "Content processed. All noise, no signals extracted."}
 
     # Layer 5: Dedup & Save
-    db_path = os.path.join(base_dir, "database")
     store = FilesystemStore(db_path=db_path)
-    deduplicator = KnowledgeDeduplicator()
+    deduplicator = KnowledgeDeduplicator(router=router, cache=cache, db_path=db_path)
     existing = store.get_all()
 
     saved = 0

@@ -7,35 +7,58 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build:
-
+  backend-test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
-        
+        python-version: "3.12"
     - name: Install backend dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
-        
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-asyncio
     - name: Run Backend Tests
       env:
         PYTHONPATH: backend/src
       run: |
-        # Simply run the existing python test scripts
-        if [ -f test_distill.py ]; then python test_distill.py; fi
-        if [ -f test_line.py ]; then python test_line.py; fi
+        pytest tests/
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
     - name: Lint with flake8
       run: |
         pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
         flake8 backend/src --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
         flake8 backend/src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  tauri-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies (Linux)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Rust Cache
+      uses: swatinem/rust-cache@v2
+      with:
+        workspaces: ./src-tauri -> target
+    - name: Build frontend
+      run: |
+        # No npm build step needed as frontend is vanilla HTML/JS
+        mkdir -p frontend
+    - name: Build Tauri App (check only)
+      run: |
+        cd src-tauri
+        cargo check

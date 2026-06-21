@@ -25,6 +25,13 @@ try:
 except ImportError:
     _ROUTER_AVAILABLE = False
 
+# Phase 3: hash cache
+try:
+    from providers.hash_cache import HashCache
+    _PHASE3_AVAILABLE = True
+except ImportError:
+    _PHASE3_AVAILABLE = False
+
 
 # ─── AI Response Schema ─────────────────────────────────────────
 
@@ -49,7 +56,7 @@ class KnowledgeDeduplicator:
     and decides whether to ADD, UPDATE, or DISCARD each chunk.
     """
 
-    def __init__(self, router=None):
+    def __init__(self, router=None, cache=None, db_path=None):
         if router:
             self.router = router
         elif _ROUTER_AVAILABLE:
@@ -57,6 +64,10 @@ class KnowledgeDeduplicator:
         else:
             self.router = None
         self.client = self.router
+
+        self._cache = cache
+        if self._cache is None and _PHASE3_AVAILABLE and db_path:
+            self._cache = HashCache(db_path=db_path)
 
     @staticmethod
     def _normalize_for_hash(text: str) -> str:
@@ -251,6 +262,22 @@ Decide:
         import asyncio
         import json as json_mod
 
+        # ── Phase 3: cache check ──────────────────────────────────────────────
+        cache_key = None
+        if self._cache is not None:
+            cache_key = HashCache.make_key(
+                prompt=prompt,
+                provider="router",
+                model="dedup-v1",
+            )
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                try:
+                    decision = DeduplicationDecision(**cached)
+                    return self._process_decision(decision, new_chunk)
+                except Exception:
+                    pass
+
         request = AIRequest(
             purpose="distill",
             messages=[{"role": "user", "content": prompt}],
@@ -258,11 +285,16 @@ Decide:
             temperature=0.2,
         )
 
-        loop = asyncio.new_event_loop()
         try:
-            response = loop.run_until_complete(self.router.complete(request))
-        finally:
-            loop.close()
+            response = asyncio.run(self.router.complete(request))
+        except RuntimeError:
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+                loop = asyncio.get_event_loop()
+                response = loop.run_until_complete(self.router.complete(request))
+            except ImportError:
+                return self._heuristic_evaluate(new_chunk, candidates)
 
         if response.error:
             return self._heuristic_evaluate(new_chunk, candidates)
@@ -280,6 +312,13 @@ Decide:
         if not decision:
             return self._heuristic_evaluate(new_chunk, candidates)
 
+        # ── Phase 3: write to cache ───────────────────────────────────────────
+        if self._cache is not None and cache_key:
+            self._cache.set(cache_key, decision.model_dump())
+
+        return self._process_decision(decision, new_chunk)
+
+    def _process_decision(self, decision: DeduplicationDecision, new_chunk: KnowledgeChunk) -> Tuple[str, Optional[KnowledgeChunk]]:
         if decision.action == "ADD_NEW":
             new_chunk.processing_layer = ProcessingLayer.DEDUPLICATED
             return "ADD", new_chunk

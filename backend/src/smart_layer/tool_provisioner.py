@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional, Any
 from pydantic import BaseModel
 from core.models import SkillDef, SkillMetadata
 try:
@@ -8,6 +8,13 @@ try:
     _ROUTER_AVAILABLE = True
 except ImportError:
     _ROUTER_AVAILABLE = False
+
+# Phase 3: hash cache
+try:
+    from providers.hash_cache import HashCache
+    _PHASE3_AVAILABLE = True
+except ImportError:
+    _PHASE3_AVAILABLE = False
 
 class ToolRequirement(BaseModel):
     mcp_servers: List[str]
@@ -24,7 +31,7 @@ AVAILABLE_MCP_SERVERS = [
 ]
 
 class ToolProvisioner:
-    def __init__(self, router=None):
+    def __init__(self, router=None, cache=None, db_path=None):
         if router:
             self.router = router
         elif _ROUTER_AVAILABLE:
@@ -33,18 +40,38 @@ class ToolProvisioner:
             self.router = None
         self.client = self.router
 
+        self._cache = cache
+        if self._cache is None and _PHASE3_AVAILABLE and db_path:
+            self._cache = HashCache(db_path=db_path)
+
     def determine_tools(self, skill: SkillDef) -> List[str]:
         """Analyzes a skill definition and determines required MCP servers."""
+        import asyncio
+        import json as json_mod
+
         if not self.client:
             return self._mock_determine(skill)
 
         # Build context
         skill_text = f"Name: {skill.name}\nDescription: {skill.description}\nPrerequisites: {skill.prerequisites}\nSteps: {skill.steps}"
         
-        try:
-            import asyncio
-            import json as json_mod
+        # ── Phase 3: cache check ──────────────────────────────────────────────
+        cache_key = None
+        if self._cache is not None:
+            cache_key = HashCache.make_key(
+                prompt=skill_text,
+                provider="router",
+                model="tool-prov-v1",
+            )
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                try:
+                    result = ToolRequirement(**cached)
+                    return result.mcp_servers
+                except Exception:
+                    pass
 
+        try:
             request = AIRequest(
                 purpose="classify",
                 messages=[
@@ -55,24 +82,37 @@ class ToolProvisioner:
                 temperature=0.3,
             )
 
-            loop = asyncio.new_event_loop()
             try:
-                response = loop.run_until_complete(self.router.complete(request))
-            finally:
-                loop.close()
+                response = asyncio.run(self.router.complete(request))
+            except RuntimeError:
+                try:
+                    import nest_asyncio
+                    nest_asyncio.apply()
+                    loop = asyncio.get_event_loop()
+                    response = loop.run_until_complete(self.router.complete(request))
+                except ImportError:
+                    return self._mock_determine(skill)
 
             if response.error:
                 return self._mock_determine(skill)
 
+            mcp_servers = []
             if response.parsed and hasattr(response.parsed, 'mcp_servers'):
-                return response.parsed.mcp_servers
+                mcp_servers = response.parsed.mcp_servers
             elif response.content:
                 try:
                     data = json_mod.loads(response.content)
                     result = ToolRequirement(**data)
-                    return result.mcp_servers
+                    mcp_servers = result.mcp_servers
                 except Exception:
                     pass
+
+            if mcp_servers:
+                # ── Phase 3: write to cache ───────────────────────────────────────────
+                if self._cache is not None and cache_key:
+                    self._cache.set(cache_key, {"mcp_servers": mcp_servers, "reasoning": "cached"})
+                return mcp_servers
+
             return self._mock_determine(skill)
         except Exception as e:
             print(f"Tool provisioning failed: {e}. Falling back to mock.")
